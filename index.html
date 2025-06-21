@@ -1,0 +1,3600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectrum Shift</title>
+    <style>
+        /* Enhanced glassmorphism design */
+        :root {
+            --grid-size: min(90vw, 85vh, 450px);
+            --grid-gap: clamp(8px, 2vw, 12px);
+            --tile-border-radius: clamp(12px, 3vw, 20px);
+            --background-color: #1a1a2e;
+            --grid-background: rgba(255, 255, 255, 0.15);
+            --empty-cell: rgba(255, 255, 255, 0.08);
+            --text-dark: #16213e;
+            --text-light: #ffffff;
+            --button-color: rgba(255, 255, 255, 0.2);
+            --button-text: #ffffff;
+            --achievement-bg: rgba(255, 255, 255, 0.12);
+            --undiscovered-color: rgba(255, 255, 255, 0.08);
+            --shop-bg: rgba(255, 255, 255, 0.15);
+            --shop-item-bg: rgba(255, 255, 255, 0.12);
+            --shop-item-hover: rgba(255, 255, 255, 0.18);
+            --rainbow-gradient: linear-gradient(90deg,
+                    hsl(0, 100%, 50%) 0%,
+                    hsl(60, 100%, 50%) 16.66%,
+                    hsl(120, 100%, 50%) 33.33%,
+                    hsl(180, 100%, 50%) 50%,
+                    hsl(240, 100%, 50%) 66.66%,
+                    hsl(300, 100%, 50%) 83.33%,
+                    hsl(0, 100%, 50%) 100%);
+            --blast-color: rgba(255, 82, 82, 0.8);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.3);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.18);
+            --glass-border-strong: 2px solid rgba(255, 255, 255, 0.25);
+            --glass-highlight: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg,
+                    rgba(26, 26, 46, 0.9) 0%,
+                    rgba(22, 33, 62, 0.9) 25%,
+                    rgba(26, 26, 46, 0.9) 50%,
+                    rgba(16, 24, 48, 0.9) 75%,
+                    rgba(26, 26, 46, 0.9) 100%),
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            background-attachment: fixed;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: clamp(8px, 2vw, 20px);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: min(100vw, 550px);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 3vw, 24px);
+            background: var(--glass-highlight);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            padding: clamp(12px, 3vw, 24px);
+            border-radius: var(--tile-border-radius);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(6px, 1.5vw, 10px);
+            border-radius: var(--tile-border-radius);
+            background: var(--grid-background);
+            backdrop-filter: blur(15px) saturate(150%);
+            -webkit-backdrop-filter: blur(15px) saturate(150%);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            gap: clamp(6px, 1.5vw, 10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .score-container {
+            display: flex;
+            gap: clamp(8px, 2vw, 16px);
+            flex: 1;
+            min-width: 0;
+        }
+
+        .menu-button {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px) saturate(160%);
+            -webkit-backdrop-filter: blur(15px) saturate(160%);
+            color: var(--button-text);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: clamp(8px, 2vw, 12px);
+            padding: clamp(6px, 1.5vw, 8px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            width: clamp(36px, 9vw, 44px);
+            height: clamp(36px, 9vw, 44px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .menu-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-button:hover::before {
+            left: 100%;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            color: var(--text-light);
+            padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+            border-radius: clamp(6px, 1.5vw, 10px);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: clamp(60px, 15vw, 80px);
+        }
+
+        .score-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .score-box:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .score-box:hover::before {
+            left: 100%;
+        }
+
+        .score-label {
+            font-size: clamp(0.6rem, 1.5vw, 0.7rem);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: clamp(1px, 0.5vw, 2px);
+        }
+
+        .score-value {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .currency-container {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            color: var(--text-light);
+            padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+            border-radius: clamp(6px, 1.5vw, 10px);
+            gap: clamp(3px, 0.8vw, 6px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: clamp(50px, 12vw, 70px);
+        }
+
+        .currency-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .currency-container:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .currency-container:hover::before {
+            left: 100%;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: clamp(8px, 2vw, 12px);
+        }
+
+        .currency-icon {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .currency-value {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .slide-menu {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 300px;
+            height: 100vh;
+            background: var(--shop-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-right: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow-hover);
+            z-index: 30;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: clamp(16px, 4vw, 24px);
+            overflow-y: auto;
+        }
+
+        .slide-menu.active {
+            left: 0;
+        }
+
+        .slide-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 25;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+
+        .slide-menu-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: clamp(20px, 5vw, 32px);
+            padding-bottom: clamp(12px, 3vw, 16px);
+            border-bottom: var(--glass-border);
+        }
+
+        .menu-title {
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-weight: 700;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .menu-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .menu-section {
+            margin-bottom: clamp(20px, 5vw, 32px);
+        }
+
+        .menu-section-title {
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: clamp(12px, 3vw, 16px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 2vw, 12px);
+        }
+
+        .menu-button-item {
+            background: var(--button-color);
+            backdrop-filter: blur(15px) saturate(160%);
+            -webkit-backdrop-filter: blur(15px) saturate(160%);
+            color: var(--button-text);
+            border: var(--glass-border);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(12px, 3vw, 16px);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-button-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .menu-button-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-button-item:hover::before {
+            left: 100%;
+        }
+
+        .faq-container {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 2vw, 12px);
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            border-radius: clamp(8px, 2vw, 12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(12px, 3vw, 16px);
+            cursor: pointer;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: clamp(0.8rem, 2vw, 0.95rem);
+            line-height: 1.3;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .faq-question:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .faq-arrow {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+            color: #4ECDC4;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-light);
+            font-size: clamp(0.7rem, 1.8vw, 0.85rem);
+            line-height: 1.5;
+            opacity: 0;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding: clamp(12px, 3vw, 16px);
+            opacity: 1;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .faq-answer strong {
+            color: #4ECDC4;
+            font-weight: 600;
+        }
+
+        .faq-modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px) saturate(120%);
+            -webkit-backdrop-filter: blur(25px) saturate(120%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: clamp(8px, 2vw, 20px);
+        }
+
+        .faq-modal-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .faq-modal {
+            background: var(--shop-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: var(--tile-border-radius);
+            width: 100%;
+            max-width: min(90vw, 600px);
+            max-height: 90vh;
+            border: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .faq-modal-container.active .faq-modal {
+            transform: scale(1);
+        }
+
+        .faq-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            z-index: 1;
+        }
+
+        .faq-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(16px, 4vw, 24px);
+            border-bottom: var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .faq-modal-title {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-light);
+        }
+
+        .faq-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .faq-modal-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .faq-modal-content {
+            padding: clamp(16px, 4vw, 24px);
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Custom scrollbar for the modal */
+        .faq-modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .faq-modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .faq-modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .faq-modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .ability-container {
+            display: flex;
+            justify-content: center;
+            gap: clamp(12px, 3vw, 16px);
+            margin-top: clamp(12px, 3vw, 16px);
+            flex-wrap: wrap;
+        }
+
+        .ability {
+            background: var(--button-color);
+            backdrop-filter: blur(15px) saturate(160%);
+            -webkit-backdrop-filter: blur(15px) saturate(160%);
+            color: var(--button-text);
+            border: var(--glass-border);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(10px, 2.5vw, 12px) clamp(20px, 5vw, 24px);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            min-width: 0;
+            flex: 1;
+            max-width: 200px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .ability::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .ability:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .ability:hover::before {
+            left: 100%;
+        }
+
+        .ability-cooldown {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.7);
+            transition: width 0.1s linear;
+            border-radius: 2px;
+        }
+
+        .controls {
+            display: none;
+            /* Hide old controls */
+        }
+
+        .button {
+            background: var(--button-color);
+            backdrop-filter: blur(15px) saturate(160%);
+            -webkit-backdrop-filter: blur(15px) saturate(160%);
+            color: var(--button-text);
+            border: var(--glass-border);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 20px);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .button.try-again-button {
+            flex: unset;
+        }
+
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: left 0.4s;
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .button:hover::before {
+            left: 100%;
+        }
+
+        .button:active {
+            transform: translateY(-1px);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button:disabled:hover {
+            transform: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .grid-container {
+            position: relative;
+            width: var(--grid-size);
+            height: var(--grid-size);
+            background: var(--grid-background);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: var(--tile-border-radius);
+            padding: var(--grid-gap);
+            margin: 0 auto;
+            border: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .grid-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: var(--grid-gap);
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .grid.size-5 {
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+        }
+
+        .cell {
+            background: var(--empty-cell);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: var(--tile-border-radius);
+            border: var(--glass-border);
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .tile {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border-radius: var(--tile-border-radius);
+            /* Default transition for all tile movements */
+            transition: left 0.15s ease-in-out, top 0.15s ease-in-out, transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+            z-index: 10;
+            backdrop-filter: blur(15px) saturate(160%);
+            -webkit-backdrop-filter: blur(15px) saturate(160%);
+            border: var(--glass-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-size: clamp(10px, 2.5vw, 16px);
+            text-align: center;
+            word-wrap: break-word;
+            overflow: hidden;
+            /* Ensure tiles are visible by default */
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            pointer-events: none;
+        }
+
+        .tile.new {
+            animation: appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tile.merged {
+            animation: pop 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tile.rainbow {
+            background: var(--rainbow-gradient);
+            background-size: 600% 100%;
+            animation: rainbow 3s linear infinite alternate;
+            color: var(--text-light);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes rainbow {
+            0% {
+                background-position: 0% 0%;
+            }
+
+            100% {
+                background-position: 100% 0%;
+            }
+        }
+
+        @keyframes appear {
+            0% {
+                transform: scale(0) rotate(-5deg);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.2) rotate(2deg);
+                opacity: 0.8;
+            }
+
+            80% {
+                transform: scale(0.95) rotate(-1deg);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px) saturate(120%);
+            -webkit-backdrop-filter: blur(25px) saturate(120%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: var(--tile-border-radius);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: var(--glass-border);
+        }
+
+        .game-over.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-over-message {
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            color: var(--text-light);
+        }
+
+        .achievement-panel {
+            background: var(--achievement-bg);
+            backdrop-filter: blur(18px) saturate(170%);
+            -webkit-backdrop-filter: blur(18px) saturate(170%);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(12px, 3vw, 20px);
+            margin-top: clamp(16px, 4vw, 24px);
+            border: var(--glass-border);
+            box-shadow: var(--glass-shadow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .achievement-title {
+            font-weight: 600;
+            margin-bottom: clamp(8px, 2vw, 16px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            color: var(--text-light);
+        }
+
+        .color-tiers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(8px, 2vw, 12px);
+            justify-content: center;
+        }
+
+        .color-tier {
+            width: clamp(30px, 8vw, 40px);
+            height: clamp(30px, 8vw, 40px);
+            border-radius: 50%;
+            border: var(--glass-border);
+            backdrop-filter: blur(10px) saturate(140%);
+            -webkit-backdrop-filter: blur(10px) saturate(140%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-tier::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .color-tier:hover {
+            transform: scale(1.15);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .color-tier.undiscovered {
+            background: var(--undiscovered-color);
+            opacity: 0.4;
+        }
+
+        .color-tier.undiscovered::before {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+        }
+
+        .shop-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px) saturate(120%);
+            -webkit-backdrop-filter: blur(25px) saturate(120%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: clamp(8px, 2vw, 20px);
+        }
+
+        .shop-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .shop {
+            background: var(--shop-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(16px, 4vw, 24px);
+            width: 100%;
+            max-width: min(90vw, 500px);
+            max-height: 90vh;
+            overflow-y: auto;
+            border: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            position: relative;
+        }
+
+        .shop::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            z-index: 1;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: clamp(16px, 4vw, 24px);
+            padding-bottom: clamp(8px, 2vw, 16px);
+            border-bottom: var(--glass-border);
+        }
+
+        .shop-title {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-light);
+        }
+
+        .shop-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .shop-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .shop-items {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 3vw, 16px);
+        }
+
+        .shop-item {
+            background: var(--shop-item-bg);
+            backdrop-filter: blur(15px) saturate(150%);
+            -webkit-backdrop-filter: blur(15px) saturate(150%);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(16px, 4vw, 20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: var(--glass-border);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-wrap: wrap;
+            gap: clamp(8px, 2vw, 12px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .shop-item:hover {
+            transform: translateY(-3px);
+            background: var(--shop-item-hover);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .shop-item:hover::before {
+            left: 100%;
+        }
+
+        .shop-item-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .shop-item-title {
+            font-weight: 600;
+            margin-bottom: clamp(4px, 1vw, 8px);
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            color: var(--text-light);
+        }
+
+        .shop-item-description {
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            opacity: 0.8;
+            line-height: 1.4;
+            color: var(--text-light);
+        }
+
+        .shop-item-price {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 1vw, 8px);
+            font-weight: 600;
+            padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--tile-border-radius);
+            border: var(--glass-border);
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: var(--text-light);
+        }
+
+        .shop-item-button {
+            background: var(--button-color);
+            color: var(--button-text);
+            border: var(--glass-border);
+            border-radius: var(--tile-border-radius);
+            padding: clamp(8px, 2vw, 10px) clamp(16px, 4vw, 20px);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+            white-space: nowrap;
+        }
+
+        .shop-item-button:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: var(--neon-shadow);
+        }
+
+        .blast-effect {
+            position: absolute;
+            background: var(--blast-color);
+            border-radius: 50%;
+            opacity: 0.7;
+            z-index: 5;
+            animation: blast 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes blast {
+            0% {
+                transform: scale(0);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+
+
+        .blast-button {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .blast-button:not(:disabled):hover {
+            background: linear-gradient(135deg, #FF8E53, #FFD93D) !important;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4) !important;
+        }
+
+        .blast-button:disabled {
+            background: linear-gradient(135deg, #666, #444) !important;
+            opacity: 0.6;
+        }
+
+        .blast-active {
+            animation: blastPulse 1s infinite alternate !important;
+            background: linear-gradient(135deg, #FFD93D, #6BCF7F) !important;
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.6) !important;
+        }
+
+        @keyframes blastPulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 217, 61, 0.6);
+            }
+
+            100% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(255, 217, 61, 0.8);
+            }
+        }
+
+        @keyframes sway {
+            0% {
+                transform: translateX(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateX(4px) rotate(2deg);
+            }
+
+            100% {
+                transform: translateX(0) rotate(0deg);
+            }
+        }
+
+
+
+        .tile.blast-hover {
+            cursor: pointer !important;
+            transition: transform 0.2s ease !important;
+            filter: brightness(1.1) saturate(1.2) !important;
+        }
+
+        .tile.blast-hover:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.8) !important;
+            border: 2px solid #FFD93D !important;
+            z-index: 15 !important;
+            filter: brightness(1.2) saturate(1.3) !important;
+        }
+
+        .tile.blast-preview {
+            box-shadow: 0 0 20px #FF6B6B !important;
+            border: 3px solid #FF6B6B !important;
+            opacity: 0.8 !important;
+        }
+
+        .tile.blast-shakeable {
+            animation: sway 0.8s infinite ease-in-out !important;
+        }
+
+        .tile.blast-shakeable:hover {
+            animation: lightShakeHover 0.6s infinite !important;
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7) !important;
+            border: 3px solid rgba(255, 255, 255, 0.8) !important;
+            z-index: 12 !important;
+        }
+
+        .tile.blast-shakeable-light {
+            animation: lightShake 0.8s infinite !important;
+            transform-origin: center !important;
+            border: 2px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.5) !important;
+            z-index: 5 !important;
+        }
+
+        .tile.blast-shakeable-light:hover {
+            animation: lightShakeHover 0.6s infinite !important;
+            transform: scale(1.1) !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7) !important;
+            border: 3px solid rgba(255, 255, 255, 0.8) !important;
+            z-index: 12 !important;
+        }
+
+
+
+        @keyframes iphoneShake {
+            0% {
+                transform: translateX(0) scale(1.08);
+            }
+
+            100% {
+                transform: translateX(0) scale(1.08);
+            }
+        }
+
+        @keyframes lightShake {
+            0% {
+                transform: translateX(0) scale(1.01) rotate(0deg);
+            }
+
+            15% {
+                transform: translateX(-2px) scale(1.02) rotate(-1deg);
+            }
+
+            30% {
+                transform: translateX(2px) scale(1.02) rotate(1deg);
+            }
+
+            45% {
+                transform: translateX(-1.5px) scale(1.02) rotate(-0.5deg);
+            }
+
+            60% {
+                transform: translateX(1.5px) scale(1.02) rotate(0.5deg);
+            }
+
+            75% {
+                transform: translateX(-1px) scale(1.01) rotate(-0.2deg);
+            }
+
+            90% {
+                transform: translateX(1px) scale(1.01) rotate(0.2deg);
+            }
+
+            100% {
+                transform: translateX(0) scale(1.01) rotate(0deg);
+            }
+        }
+
+        @keyframes lightShakeHover {
+            0% {
+                transform: translateX(0) scale(1.08);
+            }
+
+            15% {
+                transform: translateX(-2px) scale(1.09);
+            }
+
+            30% {
+                transform: translateX(2px) scale(1.09);
+            }
+
+            45% {
+                transform: translateX(-1px) scale(1.09);
+            }
+
+            60% {
+                transform: translateX(1px) scale(1.09);
+            }
+
+            75% {
+                transform: translateX(-0.5px) scale(1.09);
+            }
+
+            90% {
+                transform: translateX(0.5px) scale(1.09);
+            }
+
+            100% {
+                transform: translateX(0) scale(1.08);
+            }
+        }
+
+
+
+        .insufficient-funds {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 35;
+            font-size: 1.2em;
+            max-width: 280px;
+            border: 2px solid #FF4444;
+            box-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
+            animation: errorPulse 0.5s ease-out;
+        }
+
+        @keyframes errorPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 500px) {
+            :root {
+                --grid-size: min(85vw, 70vh);
+                --grid-gap: clamp(6px, 1.5vw, 8px);
+                --tile-border-radius: clamp(6px, 1.5vw, 12px);
+            }
+
+            .game-container {
+                gap: clamp(8px, 2vw, 16px);
+                padding: clamp(8px, 2vw, 16px);
+            }
+
+            .game-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: clamp(8px, 2vw, 12px);
+            }
+
+            .score-container {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: clamp(6px, 1.5vw, 8px);
+            }
+
+            .score-box,
+            .currency-container {
+                flex: 1;
+                min-width: 0;
+                padding: clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 10px);
+            }
+
+            .header-buttons {
+                justify-content: center;
+                gap: clamp(12px, 3vw, 16px);
+            }
+
+            .menu-button {
+                width: clamp(40px, 10vw, 48px);
+                height: clamp(40px, 10vw, 48px);
+            }
+
+            .ability-container {
+                flex-direction: column;
+                gap: clamp(8px, 2vw, 12px);
+            }
+
+            .ability {
+                max-width: none;
+                width: 100%;
+                flex: none;
+                padding: clamp(12px, 3vw, 16px);
+                font-size: clamp(0.8rem, 2.2vw, 1rem);
+            }
+
+            .controls {
+                gap: clamp(4px, 1vw, 8px);
+            }
+
+            .button {
+                padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 16px);
+                font-size: clamp(0.6rem, 1.8vw, 0.8rem);
+                min-width: 0;
+            }
+
+            .tile {
+                font-size: clamp(6px, 1.5vw, 10px);
+            }
+
+            .achievement-panel {
+                padding: clamp(8px, 2vw, 16px);
+                margin-top: clamp(6px, 1.5vw, 12px);
+            }
+        }
+
+        @media (max-width: 350px) {
+            :root {
+                --grid-size: min(98vw, 65vh);
+                --grid-gap: 6px;
+                --tile-border-radius: 8px;
+            }
+
+            .game-header {
+                padding: 8px;
+                gap: 8px;
+            }
+
+            .score-container {
+                gap: 6px;
+            }
+
+            .score-box,
+            .currency-container {
+                padding: 6px 8px;
+                min-width: 0;
+            }
+
+            .header-buttons {
+                gap: 12px;
+            }
+
+            .menu-button {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .ability {
+                padding: 12px;
+                font-size: 0.8rem;
+            }
+
+            .controls {
+                gap: 4px;
+            }
+
+            .button {
+                padding: 6px 8px;
+                font-size: 0.6rem;
+                letter-spacing: 0.5px;
+            }
+
+            .tile {
+                font-size: 8px;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .game-container {
+                gap: clamp(8px, 2vh, 12px);
+            }
+
+            .achievement-panel {
+                padding: clamp(8px, 2vh, 16px);
+                margin-top: clamp(6px, 1vh, 12px);
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 500px) {
+            :root {
+                --grid-size: min(70vh, 70vw);
+            }
+
+            body {
+                padding: clamp(4px, 1vh, 12px);
+            }
+
+            .game-container {
+                flex-direction: row;
+                max-width: 100%;
+                gap: clamp(8px, 2vw, 16px);
+                align-items: flex-start;
+            }
+
+            .grid-container {
+                flex: 0 0 auto;
+                width: var(--grid-size);
+                height: var(--grid-size);
+            }
+
+            .game-info {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: clamp(8px, 2vw, 16px);
+                max-width: 300px;
+                min-width: 200px;
+            }
+
+            .achievement-panel {
+                margin-top: 0;
+                flex: 1;
+                overflow-y: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-label">SCORE</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-label">BEST</div>
+                    <div class="score-value" id="best-score">0</div>
+                </div>
+            </div>
+            <div class="currency-container">
+                <div class="currency-icon">💎</div>
+                <div class="currency-value" id="currency">0</div>
+            </div>
+            <div class="header-buttons">
+                <button class="menu-button" id="shop-button">🛒</button>
+                <button class="menu-button" id="menu-toggle">☰</button>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <div class="grid" id="grid"></div>
+            <div class="game-over" id="game-over">
+                <div class="game-over-message">Game Over!</div>
+                <button class="button try-again-button" id="try-again">Try Again</button>
+            </div>
+
+        </div>
+
+        <div class="ability-container" id="ability-container">
+            <!-- Abilities will be added here dynamically -->
+        </div>
+
+        <div class="achievement-panel">
+            <div class="achievement-title">Discovered Colors</div>
+            <div class="color-tiers" id="color-tiers"></div>
+        </div>
+
+    </div>
+
+    <!-- Slide Menu Overlay -->
+    <div class="slide-menu-overlay" id="slide-menu-overlay"></div>
+
+    <!-- Slide Menu -->
+    <div class="slide-menu" id="slide-menu">
+        <div class="menu-header">
+            <div class="menu-title">Menu</div>
+            <button class="menu-close" id="menu-close">×</button>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-buttons">
+                <button class="menu-button-item" id="new-game">🎮 New Game</button>
+                <button class="menu-button-item" id="faq-button">❓ FAQ</button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="shop-container" id="shop-container">
+        <div class="shop">
+            <div class="shop-header">
+                <div class="shop-title">Shop</div>
+                <button class="shop-close" id="shop-close">×</button>
+            </div>
+            <div class="shop-items" id="shop-items">
+                <!-- Shop items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div class="faq-modal-container" id="faq-modal-container">
+        <div class="faq-modal">
+            <div class="faq-modal-header">
+                <div class="faq-modal-title">❓ Game Guide & FAQ</div>
+                <button class="faq-modal-close" id="faq-modal-close">×</button>
+            </div>
+            <div class="faq-modal-content">
+                <div class="faq-container" id="faq-container">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🎯 Main Game Goal</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            Combine tiles of the same color to create new colors and score points. The goal is to reach
+                            the highest color levels and achieve the maximum score!
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🎨 Color System (12 Levels)</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>Color Levels:</strong><br>
+                            1. Coral Red (2 points)<br>
+                            2. Sunset Orange (4 points)<br>
+                            3. Golden Yellow (8 points)<br>
+                            4. Lime Green (16 points)<br>
+                            5. Emerald (32 points)<br>
+                            6. Turquoise (64 points)<br>
+                            7. Sky Blue (128 points)<br>
+                            8. Royal Blue (256 points)<br>
+                            9. Deep Purple (512 points)<br>
+                            10. Violet (1024 points)<br>
+                            11. Rose Pink (2048 points)<br>
+                            12. Sunset Gold (4096 points)
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>💎 Currency System (Gems)</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            Gems are earned when merging tiles. The amount depends on the tile level. Use
+                            gems in the shop to purchase upgrades. <strong>Important:</strong> rewards decrease as
+                            score increases to create difficulty.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🌈 Rainbow Tiles</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            Rare tiles with an iridescent background. Can merge with any regular tile. Base spawn chance
+                            is 1% (can be increased in the shop). When merging two rainbow tiles, a
+                            rainbow tile of the highest level is created.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>💥 "Blast" Ability</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>Unlock:</strong> When reaching the 6th color level.<br>
+                            <strong>How it works:</strong> Destroys groups of adjacent tiles of the same color.<br>
+                            <strong>Cost:</strong> 8💎 + increases with score.<br>
+                            <strong>Cooldown:</strong> 8 seconds + increases with score.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>↶ "Undo" Ability</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            Not available by default - must be purchased in the shop. Allows you to undo the last move.
+                            Number of uses is limited and resets when starting a new game.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>✖️ Blockers (Obstacles)</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            Appear after 100 points with a 15% probability. Gray tiles with a red X that cannot be
+                            merged. Create additional challenge. Can only be destroyed with the Blast ability.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🛒 Shop and Upgrades</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>Extra Undo:</strong> +1 undo (25💎 + increases with purchases)<br>
+                            <strong>Rainbow Boost:</strong> +3% rainbow tile chance (40💎 + increases)<br>
+                            <strong>Grid Upgrade:</strong> Upgrade grid from 4x4 to 5x5 (100💎, one-time)
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🎮 Controls</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>Desktop:</strong> Arrow keys<br>
+                            <strong>Mobile:</strong> Swipe on screen<br>
+                            <strong>Blast mode:</strong> Click on tile to blast<br>
+                            All tiles move in the selected direction until they stop.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>🏆 Scoring System and Difficulty</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>Points:</strong> Depend on tile level (2-4096 points)<br>
+                            <strong>Difficulty:</strong> As score increases, ability costs rise,
+                            rewards decrease, blockers and higher-level tiles appear more often.<br>
+                            <strong>Best Score:</strong> Saved between sessions.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <span>📱 Difficulty Features</span>
+                            <span class="faq-arrow">▼</span>
+                        </div>
+                        <div class="faq-answer">
+                            <strong>High Difficulty:</strong><br>
+                            • No undos by default<br>
+                            • Low rainbow tile chance (1%)<br>
+                            • Blockers appear after 100 points<br>
+                            • Rising ability costs<br>
+                            • Decreasing merge rewards<br>
+                            • Sometimes level 2-3 tiles spawn immediately
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Game {
+            constructor() {
+                // Color tiers data with improved contrast and visual appeal
+                this.colorTiers = [
+                    { tier: 1, name: "Coral Red", hex: "#FF6B6B", points: 2 },
+                    { tier: 2, name: "Sunset Orange", hex: "#FF8E53", points: 4 },
+                    { tier: 3, name: "Golden Yellow", hex: "#FFD93D", points: 8 },
+                    { tier: 4, name: "Lime Green", hex: "#6BCF7F", points: 16 },
+                    { tier: 5, name: "Emerald", hex: "#4ECDC4", points: 32 },
+                    { tier: 6, name: "Turquoise", hex: "#45B7D1", points: 64 },
+                    { tier: 7, name: "Sky Blue", hex: "#96CEB4", points: 128 },
+                    { tier: 8, name: "Royal Blue", hex: "#6C5CE7", points: 256 },
+                    { tier: 9, name: "Deep Purple", hex: "#A29BFE", points: 512 },
+                    { tier: 10, name: "Violet", hex: "#FD79A8", points: 1024 },
+                    { tier: 11, name: "Rose Pink", hex: "#FDCB6E", points: 2048 },
+                    { tier: 12, name: "Sunset Gold", hex: "#E17055", points: 4096 }
+                ];
+
+                // Game state variables
+                this.gridSize = 4;
+                this.grid = [];
+                this.score = 0;
+                this.bestScore = 0;
+                this.currency = 0;
+                this.discoveredTiers = [];
+                this.maxUndos = 0; // DIFFICULTY: No undos by default
+                this.usedUndos = 0;
+                this.rainbowChance = 0.05;
+                this.rainbowChanceBoost = 0;
+                this.blastUnlocked = false;
+                this.blastCooldown = 0;
+                this.isBlastActive = false;
+                this.gameOver = false;
+                this.previousStates = [];
+                this.shopPurchases = {
+                    extraUndos: 0,
+                    rainbowChance: 0,
+                    gridUpgrade: false
+                };
+
+                // Constants for better performance
+                this.GRID_GAP = 12;
+                this.MOBILE_GRID_GAP = 8;
+                this.SMALL_MOBILE_GRID_GAP = 6;
+
+                // DOM elements
+                this.gridElement = document.getElementById('grid');
+                this.scoreElement = document.getElementById('score');
+                this.bestScoreElement = document.getElementById('best-score');
+                this.currencyElement = document.getElementById('currency');
+                this.colorTiersElement = document.getElementById('color-tiers');
+                this.gameOverElement = document.getElementById('game-over');
+                this.shopContainer = document.getElementById('shop-container');
+                this.shopItems = document.getElementById('shop-items');
+                this.abilityContainer = document.getElementById('ability-container');
+                this.slideMenu = document.getElementById('slide-menu');
+                this.slideMenuOverlay = document.getElementById('slide-menu-overlay');
+
+                // Bind event handlers
+                this.boundHandleGridClick = this.handleGridClick.bind(this);
+
+                // Initialize the game
+                this.initializeGame();
+                this.setupEventListeners();
+                this.loadGameState();
+
+                // Ensure UI is updated with loaded values
+                this.updateScoreDisplay();
+                this.updateAchievementPanel();
+            }
+
+            initializeGame() {
+                // Clear the grid
+                this.gridElement.innerHTML = '';
+
+                // Create the grid cells
+                for (let row = 0; row < this.gridSize; row++) {
+                    this.grid[row] = [];
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'cell';
+                        this.gridElement.appendChild(cell);
+                        this.grid[row][col] = null;
+                    }
+                }
+
+                // Update grid size class
+                this.gridElement.className = `grid${this.gridSize === 5 ? ' size-5' : ''}`;
+
+                // Add initial tiles with delay to ensure proper positioning
+                setTimeout(() => {
+                    this.addRandomTile();
+                    this.addRandomTile();
+                }, 50);
+
+                // Initialize the color tiers display
+                this.initializeColorTiers();
+
+                // Initialize the shop
+                this.initializeShop();
+
+                // Initialize abilities
+                this.initializeAbilities();
+
+                // Update the displays
+                this.updateScoreDisplay();
+                this.updateAchievementPanel();
+
+                // Reset game state
+                this.gameOver = false;
+                this.gameOverElement.classList.remove('active');
+            }
+
+            initializeColorTiers() {
+                this.colorTiersElement.innerHTML = '';
+
+                for (const colorTier of this.colorTiers) {
+                    const tierElement = document.createElement('div');
+                    tierElement.className = 'color-tier';
+                    tierElement.dataset.tier = colorTier.tier;
+
+                    if (this.discoveredTiers.includes(colorTier.tier)) {
+                        tierElement.style.backgroundColor = colorTier.hex;
+                        tierElement.title = `${colorTier.name} (${colorTier.points} points)`;
+                    } else {
+                        tierElement.classList.add('undiscovered');
+                        tierElement.title = 'Undiscovered';
+                    }
+
+                    this.colorTiersElement.appendChild(tierElement);
+                }
+            }
+
+            createUndoAbility() {
+                // Create undo container with description
+                const undoContainer = document.createElement('div');
+                undoContainer.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                    flex: 1;
+                `;
+
+                const undoButton = document.createElement('button');
+                undoButton.className = 'ability';
+                undoButton.id = 'undo-ability';
+                undoButton.style.display = 'flex'
+                undoButton.style.justifyContent = 'center'
+                undoButton.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2em;">↶</span>
+                        <span>UNDO</span>
+                    </div>
+                `;
+
+                // Add description with current count
+                const description = document.createElement('div');
+                description.style.cssText = `
+                    font-size: 0.7em;
+                    text-align: center;
+                    opacity: 0.8;
+                    line-height: 1.3;
+                    color: var(--text-light);
+                `;
+                const remainingUndos = this.maxUndos - this.usedUndos;
+                description.innerHTML = `
+                    <div>Undo last move</div>
+                    <div style="margin-top: 4px; color: #4ECDC4; font-weight: bold;">
+                        ${remainingUndos} remaining
+                    </div>
+                `;
+
+                undoContainer.appendChild(undoButton);
+                undoContainer.appendChild(description);
+                this.abilityContainer.appendChild(undoContainer);
+
+                undoButton.addEventListener('click', () => this.undo());
+
+                // Store references for updates
+                this.undoButton = undoButton;
+                this.undoDescription = description;
+
+                // Update button state
+                this.updateUndoButton();
+            }
+
+            initializeShop() {
+                this.shopItems.innerHTML = '';
+
+                // Extra Undos - Expensive but valuable
+                const undoItem = document.createElement('div');
+                undoItem.className = 'shop-item';
+                undoItem.innerHTML = `
+                    <div class="shop-item-info">
+                        <div class="shop-item-title">Extra Undo</div>
+                        <div class="shop-item-description">Increase max undo count by 1 (Very valuable!)</div>
+                    </div>
+                    <div class="shop-item-price">
+                        <div class="currency-icon">💎</div>
+                        <div>${25 + this.shopPurchases.extraUndos * 15}</div>
+                    </div>
+                    <button class="shop-item-button" id="buy-undo">Buy</button>
+                `;
+                this.shopItems.appendChild(undoItem);
+
+                // Rainbow Chance - Luxury upgrade
+                const rainbowItem = document.createElement('div');
+                rainbowItem.className = 'shop-item';
+                rainbowItem.innerHTML = `
+                    <div class="shop-item-info">
+                        <div class="shop-item-title">Rainbow Boost</div>
+                        <div class="shop-item-description">Increase rainbow tile chance by 3% (Luxury upgrade)</div>
+                    </div>
+                    <div class="shop-item-price">
+                        <div class="currency-icon">💎</div>
+                        <div>${40 + this.shopPurchases.rainbowChance * 25}</div>
+                    </div>
+                    <button class="shop-item-button" id="buy-rainbow">Buy</button>
+                `;
+                this.shopItems.appendChild(rainbowItem);
+
+                // Grid Upgrade
+                if (!this.shopPurchases.gridUpgrade) {
+                    const gridItem = document.createElement('div');
+                    gridItem.className = 'shop-item';
+                    gridItem.innerHTML = `
+                        <div class="shop-item-info">
+                            <div class="shop-item-title">Grid Upgrade</div>
+                            <div class="shop-item-description">Upgrade grid from 4x4 to 5x5 (Game changer!)</div>
+                        </div>
+                        <div class="shop-item-price">
+                            <div class="currency-icon">💎</div>
+                            <div>100</div>
+                        </div>
+                        <button class="shop-item-button" id="buy-grid">Buy</button>
+                    `;
+                    this.shopItems.appendChild(gridItem);
+                }
+
+                // Add event listeners
+                document.getElementById('buy-undo').addEventListener('click', () => this.buyExtraUndo());
+                document.getElementById('buy-rainbow').addEventListener('click', () => this.buyRainbowChance());
+
+                const buyGridButton = document.getElementById('buy-grid');
+                if (buyGridButton) {
+                    buyGridButton.addEventListener('click', () => this.buyGridUpgrade());
+                }
+
+                // Update button states
+                this.updateShopButtons();
+            }
+
+            initializeAbilities() {
+                this.abilityContainer.innerHTML = '';
+
+                // Add Undo button if available
+                if (this.maxUndos > 0) {
+                    this.createUndoAbility();
+                }
+
+                if (this.blastUnlocked) {
+                    // Create blast container with description
+                    const blastContainer = document.createElement('div');
+                    blastContainer.style.cssText = `
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 8px;
+                        flex: 1;
+                    `;
+
+                    const blastButton = document.createElement('button');
+                    blastButton.className = 'ability blast-button';
+                    blastButton.id = 'blast-ability';
+                    blastButton.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">💥</span>
+                            <span>BLAST</span>
+                        </div>
+                    `;
+                    blastButton.disabled = this.blastCooldown > 0;
+
+                    // Add description with dynamic cost
+                    const description = document.createElement('div');
+                    description.style.cssText = `
+                        font-size: 0.7em;
+                        text-align: center;
+                        opacity: 0.8;
+                        line-height: 1.3;
+                        color: var(--text-light);
+                    `;
+                    const baseCost = 8;
+                    const scalingCost = Math.floor(this.score / 500);
+                    const currentCost = baseCost + scalingCost;
+                    description.innerHTML = `
+                        <div>Destroy groups of same-colored tiles</div>
+                        <div style="margin-top: 4px; color: #4ECDC4; font-weight: bold;">
+                            💎 ${currentCost} per use
+                        </div>
+                        <div style="font-size: 0.9em; margin-top: 2px; color: #FF8E53;">
+                            Cost increases with score
+                        </div>
+                    `;
+
+                    const cooldownBar = document.createElement('div');
+                    cooldownBar.className = 'ability-cooldown';
+                    cooldownBar.style.width = this.blastCooldown > 0 ? '100%' : '0';
+
+                    blastButton.appendChild(cooldownBar);
+                    blastContainer.appendChild(blastButton);
+                    blastContainer.appendChild(description);
+                    this.abilityContainer.appendChild(blastContainer);
+
+                    blastButton.addEventListener('click', () => this.activateBlast());
+
+                    // Store reference to description for updates
+                    this.blastDescription = description;
+                    this.blastButton = blastButton;
+                }
+            }
+
+            setupEventListeners() {
+                // Keyboard controls
+                document.addEventListener('keydown', (e) => {
+                    if (this.gameOver) return;
+
+                    let moved = false;
+
+                    switch (e.key) {
+                        case 'ArrowUp':
+                            e.preventDefault(); // Prevent scrolling
+                            moved = this.move('up');
+                            break;
+                        case 'ArrowDown':
+                            e.preventDefault(); // Prevent scrolling
+                            moved = this.move('down');
+                            break;
+                        case 'ArrowLeft':
+                            e.preventDefault(); // Prevent scrolling
+                            moved = this.move('left');
+                            break;
+                        case 'ArrowRight':
+                            e.preventDefault(); // Prevent scrolling
+                            moved = this.move('right');
+                            break;
+                    }
+
+                    if (moved) {
+                        this.afterMove();
+                    }
+                });
+
+                // Touch controls
+                let touchStartX = 0;
+                let touchStartY = 0;
+                let touchEndX = 0;
+                let touchEndY = 0;
+
+                this.gridElement.addEventListener('touchstart', (e) => {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }, { passive: true });
+
+                this.gridElement.addEventListener('touchend', (e) => {
+                    if (this.gameOver) return;
+
+                    touchEndX = e.changedTouches[0].clientX;
+                    touchEndY = e.changedTouches[0].clientY;
+
+                    const dx = touchEndX - touchStartX;
+                    const dy = touchEndY - touchStartY;
+
+                    // Determine the direction of the swipe
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        // Horizontal swipe
+                        if (dx > 50) {
+                            if (this.move('right')) this.afterMove();
+                        } else if (dx < -50) {
+                            if (this.move('left')) this.afterMove();
+                        }
+                    } else {
+                        // Vertical swipe
+                        if (dy > 50) {
+                            if (this.move('down')) this.afterMove();
+                        } else if (dy < -50) {
+                            if (this.move('up')) this.afterMove();
+                        }
+                    }
+                }, { passive: true });
+
+                // Button controls
+                document.getElementById('new-game').addEventListener('click', () => {
+                    this.resetGame();
+                    this.toggleSlideMenu(); // Close menu after action
+                });
+                document.getElementById('try-again').addEventListener('click', () => this.resetGame());
+                document.getElementById('shop-close').addEventListener('click', () => this.toggleShop());
+                document.getElementById('menu-toggle').addEventListener('click', () => this.toggleSlideMenu());
+                document.getElementById('menu-close').addEventListener('click', () => this.toggleSlideMenu());
+                document.getElementById('shop-button').addEventListener('click', () => this.toggleShop());
+                this.slideMenuOverlay.addEventListener('click', () => this.toggleSlideMenu());
+
+                // FAQ Modal controls
+                document.getElementById('faq-button').addEventListener('click', () => {
+                    this.toggleSlideMenu(); // Close menu first
+                    this.toggleFAQModal(); // Then open FAQ modal
+                });
+                document.getElementById('faq-modal-close').addEventListener('click', () => this.toggleFAQModal());
+                document.getElementById('faq-modal-container').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('faq-modal-container')) {
+                        this.toggleFAQModal();
+                    }
+                });
+            }
+
+            saveGameState() {
+                // Save the current state for undo
+                const state = {
+                    grid: JSON.parse(JSON.stringify(this.grid)),
+                    score: this.score,
+                    currency: this.currency,
+                    discoveredTiers: [...this.discoveredTiers]
+                };
+
+                this.previousStates.push(state);
+
+                // Limit the number of saved states
+                if (this.previousStates.length > 10) {
+                    this.previousStates.shift();
+                }
+
+                // Update the undo button
+                this.updateUndoButton();
+
+                // Save progress to localStorage (but not current game state)
+                this.saveToLocalStorage();
+            }
+
+            undo() {
+                if (this.previousStates.length === 0 || this.usedUndos >= this.maxUndos) return;
+
+                const previousState = this.previousStates.pop();
+                this.grid = previousState.grid;
+                this.score = previousState.score;
+                this.currency = previousState.currency;
+                this.discoveredTiers = previousState.discoveredTiers;
+
+                this.usedUndos++;
+                this.refreshAllTiles();
+                this.updateScoreDisplay();
+                this.updateAchievementPanel();
+                this.updateUndoButton();
+
+                // Save to localStorage
+                this.saveToLocalStorage();
+            }
+
+            updateUndoButton() {
+                if (!this.undoButton || !this.undoDescription) return;
+
+                const remainingUndos = this.maxUndos - this.usedUndos;
+                const canUndo = remainingUndos > 0 && this.previousStates.length > 0;
+
+                // Update button state
+                this.undoButton.disabled = !canUndo;
+
+                // Update button text based on state
+                if (!canUndo) {
+                    if (remainingUndos <= 0) {
+                        this.undoButton.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2em;">⏸️</span>
+                                <span>NO UNDOS</span>
+                            </div>
+                        `;
+                    } else {
+                        this.undoButton.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 1.2em;">⏸️</span>
+                                <span>NO MOVES</span>
+                            </div>
+                        `;
+                    }
+                } else {
+                    this.undoButton.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">↶</span>
+                            <span>UNDO</span>
+                        </div>
+                    `;
+                }
+
+                // Update description
+                this.undoDescription.innerHTML = `
+                    <div>Undo last move</div>
+                    <div style="margin-top: 4px; color: ${canUndo ? '#4ECDC4' : '#FF6B6B'}; font-weight: bold;">
+                        ${remainingUndos} remaining
+                    </div>
+                `;
+            }
+
+
+
+            toggleShop() {
+                this.shopContainer.classList.toggle('active');
+                this.updateShopButtons();
+            }
+
+            toggleSlideMenu() {
+                this.slideMenu.classList.toggle('active');
+                this.slideMenuOverlay.classList.toggle('active');
+            }
+
+            toggleFAQModal() {
+                const faqModal = document.getElementById('faq-modal-container');
+                faqModal.classList.toggle('active');
+            }
+
+            updateShopButtons() {
+                const buyUndoButton = document.getElementById('buy-undo');
+                const buyRainbowButton = document.getElementById('buy-rainbow');
+                const buyGridButton = document.getElementById('buy-grid');
+
+                const undoPrice = 10 + this.shopPurchases.extraUndos * 5;
+                const rainbowPrice = 15 + this.shopPurchases.rainbowChance * 10;
+                const gridPrice = 50;
+
+                buyUndoButton.disabled = this.currency < undoPrice;
+                buyRainbowButton.disabled = this.currency < rainbowPrice;
+
+                if (buyGridButton) {
+                    buyGridButton.disabled = this.currency < gridPrice;
+                }
+            }
+
+            buyExtraUndo() {
+                const price = 25 + this.shopPurchases.extraUndos * 15;
+
+                if (this.currency >= price) {
+                    this.currency -= price;
+                    this.shopPurchases.extraUndos++;
+                    this.maxUndos++;
+
+                    // Reinitialize abilities to show/update Undo button
+                    this.initializeAbilities();
+
+                    this.updateScoreDisplay();
+                    this.initializeShop();
+                    this.saveToLocalStorage();
+                }
+            }
+
+            buyRainbowChance() {
+                const price = 40 + this.shopPurchases.rainbowChance * 25;
+
+                if (this.currency >= price) {
+                    this.currency -= price;
+                    this.shopPurchases.rainbowChance++;
+                    this.rainbowChanceBoost += 0.03; // Reduced bonus
+
+                    this.updateScoreDisplay();
+                    this.initializeShop();
+                    this.saveToLocalStorage();
+                }
+            }
+
+            buyGridUpgrade() {
+                const price = 100;
+
+                if (this.currency >= price && !this.shopPurchases.gridUpgrade) {
+                    this.currency -= price;
+                    this.shopPurchases.gridUpgrade = true;
+                    this.gridSize = 5;
+
+                    // Save state before upgrade
+                    this.saveToLocalStorage();
+
+                    // Reset the game with the new grid size
+                    this.resetGame(false);
+                }
+            }
+
+            activateBlast() {
+                // Dynamic blast cost - increases with score to create scarcity
+                const baseCost = 8;
+                const scalingCost = Math.floor(this.score / 500); // +1 cost per 500 points
+                const blastCost = baseCost + scalingCost;
+
+                if (this.blastCooldown > 0 || this.gameOver) return;
+
+                // Check if player has enough currency
+                if (this.currency < blastCost) {
+                    this.showInsufficientFundsMessage(blastCost);
+                    return;
+                }
+
+                // Deduct currency
+                this.currency -= blastCost;
+                // Update only currency display, not the entire UI
+                this.currencyElement.textContent = this.currency;
+
+                this.isBlastActive = true;
+                document.body.style.cursor = 'crosshair';
+
+                const blastButton = document.getElementById('blast-ability');
+                if (blastButton) {
+                    blastButton.disabled = true;
+                    blastButton.classList.add('blast-active');
+                }
+
+                // Add hover effects, click listeners and shake animation immediately
+                this.setupBlastTiles();
+
+                // Add delegation listener to grid
+                this.gridElement.addEventListener('click', this.boundHandleGridClick);
+
+                // Add a timeout to cancel blast mode if not used
+                setTimeout(() => {
+                    if (this.isBlastActive) {
+                        this.cancelBlast();
+                    }
+                }, 10000); // Increased to 10 seconds for better UX
+            }
+
+            cancelBlast() {
+                this.isBlastActive = false;
+                document.body.style.cursor = '';
+
+                const blastButton = document.getElementById('blast-ability');
+                if (blastButton) {
+                    blastButton.classList.remove('blast-active');
+                }
+
+                // Remove grid click listener
+                this.gridElement.removeEventListener('click', this.boundHandleGridClick);
+
+                // Remove all blast-related classes
+                const tiles = document.querySelectorAll('.tile');
+                tiles.forEach(tile => {
+                    tile.classList.remove('blast-hover', 'blast-preview', 'blast-shakeable', 'blast-shakeable-light');
+                });
+            }
+
+
+
+            showInsufficientFundsMessage(requiredCost) {
+                const message = document.createElement('div');
+                message.className = 'insufficient-funds';
+                message.innerHTML = `
+                    <div style="font-size: 2em; margin-bottom: 10px;">💎</div>
+                    <div style="font-weight: bold; margin-bottom: 10px;">NOT ENOUGH GEMS!</div>
+                    <div style="font-size: 0.9em;">You need ${requiredCost} 💎 to use Blast</div>
+                    <div style="font-size: 0.8em; margin-top: 8px; opacity: 0.8;">Cost increases with score</div>
+                `;
+                document.body.appendChild(message);
+
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    message.remove();
+                }, 3000);
+            }
+
+            setupBlastTiles() {
+                const tileElements = this.gridElement.querySelectorAll('div.tile');
+                let blastableTiles = 0;
+
+                tileElements.forEach(tileElement => {
+                    const row = parseInt(tileElement.dataset.row);
+                    const col = parseInt(tileElement.dataset.col);
+                    const tile = this.grid[row][col];
+                    if (!tile) return; // safety
+
+                    // Add hover listeners (delegated on element level)
+                    tileElement.addEventListener('mouseenter', this.handleBlastHover.bind(this));
+                    tileElement.addEventListener('mouseleave', this.handleBlastUnhover.bind(this));
+
+                    // Basic hover
+                    tileElement.classList.add('blast-hover');
+
+                    // Reflow trick
+                    void tileElement.offsetWidth;
+
+                    // All tiles should shake since all can be blasted
+                    tileElement.classList.add('blast-shakeable');
+                    blastableTiles++;
+                });
+            }
+
+            canTileBeBlasted(row, col) {
+                const targetTile = this.grid[row][col];
+                if (!targetTile || targetTile.isBlocker) return false;
+
+                const targetTier = targetTile.tier;
+                const directions = [
+                    [-1, 0], // up
+                    [1, 0],  // down
+                    [0, -1], // left
+                    [0, 1],  // right
+                ];
+
+                // Check if there are adjacent tiles of the same color
+                for (const [dx, dy] of directions) {
+                    const newRow = row + dx;
+                    const newCol = col + dy;
+
+                    if (
+                        newRow >= 0 && newRow < this.gridSize &&
+                        newCol >= 0 && newCol < this.gridSize &&
+                        this.grid[newRow][newCol] &&
+                        !this.grid[newRow][newCol].isBlocker &&
+                        this.grid[newRow][newCol].tier === targetTier
+                    ) {
+                        return true; // Found at least one adjacent tile of same color
+                    }
+                }
+
+                return false; // No adjacent tiles of same color found
+            }
+
+            handleBlastHover(e) {
+                if (!this.isBlastActive) return;
+
+                const tile = e.currentTarget;
+                const row = parseInt(tile.dataset.row);
+                const col = parseInt(tile.dataset.col);
+
+                // Preview which tiles would be affected
+                this.previewBlast(row, col);
+            }
+
+            handleBlastUnhover(e) {
+                if (!this.isBlastActive) return;
+
+                // Remove preview
+                const tiles = document.querySelectorAll('.tile');
+                tiles.forEach(tile => {
+                    tile.classList.remove('blast-preview');
+                });
+            }
+
+            previewBlast(row, col) {
+                const targetTile = this.grid[row][col];
+                if (!targetTile) return;
+
+                const targetTier = targetTile.tier;
+                const tilesToHighlight = [];
+
+                // Find adjacent tiles of the same color
+                const directions = [
+                    [-1, 0], // up
+                    [1, 0],  // down
+                    [0, -1], // left
+                    [0, 1],  // right
+                ];
+
+                // Add the target tile itself
+                tilesToHighlight.push({ row, col });
+
+                // Check adjacent tiles
+                for (const [dx, dy] of directions) {
+                    const newRow = row + dx;
+                    const newCol = col + dy;
+
+                    if (
+                        newRow >= 0 && newRow < this.gridSize &&
+                        newCol >= 0 && newCol < this.gridSize &&
+                        this.grid[newRow][newCol] &&
+                        !this.grid[newRow][newCol].isBlocker &&
+                        this.grid[newRow][newCol].tier === targetTier
+                    ) {
+                        tilesToHighlight.push({ row: newRow, col: newCol });
+                    }
+                }
+
+                // Remove previous preview
+                const allTiles = document.querySelectorAll('.tile');
+                allTiles.forEach(tile => {
+                    tile.classList.remove('blast-preview');
+                });
+
+                // Only highlight if there are tiles to blast (more than just the target)
+                if (tilesToHighlight.length > 1) {
+                    tilesToHighlight.forEach(({ row, col }) => {
+                        const tileElement = this.gridElement.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+                        if (tileElement) {
+                            tileElement.classList.add('blast-preview');
+                        }
+                    });
+                }
+            }
+
+            handleGridClick(e) {
+                if (!this.isBlastActive) return;
+
+                // Find the clicked tile
+                let tile = e.target;
+                while (tile && !tile.classList.contains('tile')) {
+                    tile = tile.parentElement;
+                }
+
+                if (!tile || !tile.dataset.row) {
+                    return;
+                }
+
+                const row = parseInt(tile.dataset.row);
+                const col = parseInt(tile.dataset.col);
+                this.executeBlast(row, col);
+                this.cancelBlast();
+
+                // Set cooldown - longer cooldown at higher scores
+                const baseCooldown = 8;
+                const scalingCooldown = Math.floor(this.score / 1000); // +1 second per 1000 points
+                this.blastCooldown = baseCooldown + scalingCooldown;
+                this.updateAbilities();
+
+                // Start cooldown timer
+                const cooldownInterval = setInterval(() => {
+                    this.blastCooldown--;
+                    this.updateAbilities();
+
+                    if (this.blastCooldown <= 0) {
+                        clearInterval(cooldownInterval);
+                    }
+                }, 1000);
+            }
+
+            executeBlast(row, col) {
+                if (!this.isBlastActive || this.gameOver) return;
+
+                const targetTile = this.grid[row][col];
+                if (!targetTile) return;
+
+                const targetTier = targetTile.tier;
+                const tilesToRemove = [];
+
+                // Find adjacent tiles of the same color, excluding blockers
+                if (targetTile.isBlocker) {
+                    tilesToRemove.push({ row, col });
+                } else {
+                    const directions = [
+                        [-1, 0], // up
+                        [1, 0],  // down
+                        [0, -1], // left
+                        [0, 1],  // right
+                    ];
+
+                    // Add the target tile itself
+                    tilesToRemove.push({ row, col });
+
+                    // Check adjacent tiles
+                    for (const [dx, dy] of directions) {
+                        const newRow = row + dx;
+                        const newCol = col + dy;
+
+                        if (
+                            newRow >= 0 && newRow < this.gridSize &&
+                            newCol >= 0 && newCol < this.gridSize &&
+                            this.grid[newRow][newCol] &&
+                            !this.grid[newRow][newCol].isBlocker &&
+                            this.grid[newRow][newCol].tier === targetTier
+                        ) {
+                            tilesToRemove.push({ row: newRow, col: newCol });
+                        }
+                    }
+                }
+
+
+                if (tilesToRemove.length >= 1) { // Allow blasting even single tiles
+                    // Save state before blast
+                    this.saveGameState();
+
+                    // Create blast effect
+                    const tileElement = this.gridElement.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+                    const rect = tileElement.getBoundingClientRect();
+                    const gridRect = this.gridElement.getBoundingClientRect();
+
+                    const blastEffect = document.createElement('div');
+                    blastEffect.className = 'blast-effect';
+                    blastEffect.style.width = `${rect.width * 2}px`;
+                    blastEffect.style.height = `${rect.height * 2}px`;
+                    blastEffect.style.left = `${rect.left - gridRect.left - rect.width / 2}px`;
+                    blastEffect.style.top = `${rect.top - gridRect.top - rect.height / 2}px`;
+                    this.gridElement.appendChild(blastEffect);
+
+                    // Remove the blast effect after animation
+                    setTimeout(() => {
+                        blastEffect.remove();
+                    }, 500);
+
+                    // Calculate points and currency
+                    let pointsGained = 0;
+                    let currencyGained = 0;
+
+                    tilesToRemove.forEach(({ row, col }) => {
+                        const tile = this.grid[row][col];
+                        pointsGained += this.colorTiers[tile.tier - 1].points;
+                        // Reduced blast rewards - makes blast expensive but still worthwhile
+                        currencyGained += Math.ceil(tile.tier / 3);
+
+                        // Remove the tile from grid
+                        this.grid[row][col] = null;
+
+                        // Animate tile removal with blast effect
+                        const tileElement = this.gridElement.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+                        if (tileElement) {
+                            // Add blast removal animation
+                            tileElement.style.transition = 'all 0.3s ease-out';
+                            tileElement.style.transform = 'scale(1.2)';
+                            tileElement.style.opacity = '0';
+
+                            setTimeout(() => {
+                                tileElement.remove();
+                            }, 300);
+                        }
+                    });
+
+                    // Update score and currency
+                    this.score += pointsGained;
+                    this.currency += currencyGained;
+
+                    // Update score display with real-time method
+                    this.updateScoreDisplay();
+
+                    // Don't add new tiles after blast - keep the game state clean
+                    // Don't update full UI to avoid flickering
+
+                    // Check for game over only if no empty cells remain
+                    if (this.isGameOver()) {
+                        this.gameOver = true;
+                        this.gameOverElement.classList.add('active');
+                        // Save final score and best score
+                        this.saveToLocalStorage();
+                    }
+                }
+            }
+
+            updateAbilities() {
+                // Update Undo button
+                this.updateUndoButton();
+
+                if (!this.blastUnlocked || !this.blastButton || !this.blastDescription) return;
+
+                // Calculate current blast cost
+                const baseCost = 8;
+                const scalingCost = Math.floor(this.score / 500);
+                const blastCost = baseCost + scalingCost;
+                const isOnCooldown = this.blastCooldown > 0;
+                const hasEnoughCurrency = this.currency >= blastCost;
+
+                this.blastButton.disabled = isOnCooldown || !hasEnoughCurrency;
+
+                // Update button text to show status
+                if (isOnCooldown) {
+                    this.blastButton.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">⏱️</span>
+                            <span>COOLDOWN ${this.blastCooldown}s</span>
+                        </div>
+                    `;
+                } else if (!hasEnoughCurrency) {
+                    this.blastButton.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">💎</span>
+                            <span>NEED MORE GEMS</span>
+                        </div>
+                    `;
+                } else {
+                    this.blastButton.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.2em;">💥</span>
+                            <span>BLAST</span>
+                        </div>
+                    `;
+                }
+
+                // Update description with current cost
+                this.blastDescription.innerHTML = `
+                    <div>Destroy groups of same-colored tiles</div>
+                    <div style="margin-top: 4px; color: ${hasEnoughCurrency ? '#4ECDC4' : '#FF6B6B'}; font-weight: bold;">
+                        💎 ${blastCost} per use
+                    </div>
+                    <div style="font-size: 0.9em; margin-top: 2px; color: #FF8E53;">
+                        Cost increases with score
+                    </div>
+                `;
+
+                const cooldownBar = this.blastButton.querySelector('.ability-cooldown');
+                if (cooldownBar) {
+                    const maxCooldown = 8 + Math.floor(this.score / 1000);
+                    cooldownBar.style.width = isOnCooldown ? `${(this.blastCooldown / maxCooldown) * 100}%` : '0';
+                }
+            }
+
+            resetGame(resetProgress = false) {
+                if (resetProgress) {
+                    // Reset all progress
+                    this.gridSize = 4;
+                    this.score = 0;
+                    this.bestScore = 0;
+                    this.currency = 0;
+                    this.discoveredTiers = [];
+                    this.maxUndos = 0; // DIFFICULTY: No undos by default
+                    this.usedUndos = 0;
+                    this.rainbowChance = 0.05;
+                    this.rainbowChanceBoost = 0;
+                    this.blastUnlocked = false;
+                    this.blastCooldown = 0;
+                    this.shopPurchases = {
+                        extraUndos: 0,
+                        rainbowChance: 0,
+                        gridUpgrade: false
+                    };
+
+                    localStorage.removeItem('spectrumShift');
+                } else {
+                    // Just reset the current game
+                    this.usedUndos = 0;
+                    // Reset score for new game (but keep currency and upgrades)
+                    this.score = 0;
+                }
+
+                this.grid = [];
+                this.previousStates = [];
+                this.gameOver = false;
+
+                this.initializeGame();
+                // Force update UI to reflect reset score and abilities
+                this.updateScoreDisplay();
+                this.updateAchievementPanel();
+                this.saveToLocalStorage();
+            }
+
+            addRandomTile() {
+                // Find all empty cells
+                const emptyCells = [];
+
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        if (!this.grid[row][col]) {
+                            emptyCells.push({ row, col });
+                        }
+                    }
+                }
+
+                if (emptyCells.length === 0) return;
+
+                // Choose a random empty cell
+                const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+
+                // DIFFICULTY: Much lower rainbow chance (reduced from 5% to 1%)
+                const effectiveRainbowChance = (this.rainbowChance + this.rainbowChanceBoost) * 0.2;
+                const isRainbow = Math.random() < effectiveRainbowChance;
+
+                // DIFFICULTY: Sometimes spawn higher tier tiles (10% chance for tier 2, 3% chance for tier 3)
+                let tier = 1;
+                const tierRandom = Math.random();
+                if (tierRandom < 0.03) {
+                    tier = 3; // 3% chance for tier 3
+                } else if (tierRandom < 0.13) {
+                    tier = 2; // 10% chance for tier 2
+                }
+
+                // DIFFICULTY: 15% chance to spawn a "blocker" tile that can't be merged (after score > 100)
+                const isBlocker = this.score > 100 && Math.random() < 0.15;
+
+                // Create the new tile
+                this.grid[row][col] = {
+                    tier: tier,
+                    isRainbow: isRainbow && !isBlocker, // Blockers can't be rainbow
+                    isBlocker: isBlocker
+                };
+
+                // Add the tier to discovered tiers if not already there
+                if (!this.discoveredTiers.includes(tier)) {
+                    this.discoveredTiers.push(tier);
+                    this.updateAchievementPanel();
+                }
+
+                // Render the new tile
+                this.renderTile(row, col, this.grid[row][col], true);
+            }
+
+            renderTile(row, col, tile, isNew = false) {
+                const tileElement = document.createElement('div');
+                tileElement.className = `tile${tile.isRainbow ? ' rainbow' : ''}`;
+                tileElement.dataset.row = row;
+                tileElement.dataset.col = col;
+
+                // Get precise cell dimensions
+                const cellDimensions = this.getCellDimensions();
+                const { width: cellWidth, height: cellHeight, gridGap } = cellDimensions;
+
+                // Calculate position correctly to match CSS grid
+                // Position relative to grid element (no additional padding needed)
+                const left = col * (cellWidth + gridGap);
+                const top = row * (cellHeight + gridGap);
+
+                tileElement.style.width = `${cellWidth}px`;
+                tileElement.style.height = `${cellHeight}px`;
+                tileElement.style.left = `${left}px`;
+                tileElement.style.top = `${top}px`;
+
+                // Set color based on tier
+                if (tile.isBlocker) {
+                    // Blocker tiles - dark gray with X pattern
+                    tileElement.style.backgroundColor = '#2C2C2C';
+                    tileElement.style.border = '2px solid #FF4444';
+                    tileElement.innerHTML = '<div style="color: #FF4444; font-weight: bold; font-size: 1.5em;">✖</div>';
+                    tileElement.style.display = 'flex';
+                    tileElement.style.alignItems = 'center';
+                    tileElement.style.justifyContent = 'center';
+                } else if (!tile.isRainbow) {
+                    const colorTier = this.colorTiers[tile.tier - 1];
+                    tileElement.style.backgroundColor = colorTier.hex;
+
+                    // No text on tiles - just color
+                } else {
+                    // Rainbow tiles - no text, just rainbow background
+                }
+
+                this.gridElement.appendChild(tileElement);
+
+                // Apply appear animation for new tiles
+                if (isNew) {
+                    // Force reflow to ensure element is in DOM
+                    tileElement.offsetHeight;
+
+                    // Add new class after reflow for proper animation
+                    requestAnimationFrame(() => {
+                        tileElement.classList.add('new');
+
+                        // Remove 'new' class after animation completes
+                        setTimeout(() => {
+                            tileElement.classList.remove('new');
+                        }, 550); // Slightly longer than animation duration
+                    });
+                }
+            }
+
+            getBrightness(hex) {
+                // Convert hex to RGB
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+
+                // Calculate brightness
+                return (r * 299 + g * 587 + b * 114) / 1000;
+            }
+
+            move(direction) {
+                // Save the current state before moving
+                this.saveGameState();
+
+                let moved = false;
+                const traversals = this.buildTraversals(direction);
+                const tilesToAnimate = [];
+
+                traversals.row.forEach(row => {
+                    traversals.col.forEach(col => {
+                        const tile = this.grid[row][col];
+
+                        if (tile) {
+                            const { newRow, newCol } = this.findFarthestPosition(row, col, direction);
+
+                            // Check if we can merge with the next tile
+                            const next = this.findNextTile(newRow, newCol, direction);
+
+                            if (next && !tile.isBlocker && !next.tile.isBlocker && (next.tile.tier === tile.tier || tile.isRainbow || next.tile.isRainbow)) {
+                                // Merge the tiles
+                                const mergedTier = Math.max(tile.tier, next.tile.tier) + 1;
+
+                                // Special case: if both tiles are rainbow, create a higher tier rainbow
+                                const isRainbow = tile.isRainbow && next.tile.isRainbow;
+
+                                // Animate tile to merge position
+                                tilesToAnimate.push({
+                                    fromRow: row,
+                                    fromCol: col,
+                                    toRow: next.row,
+                                    toCol: next.col,
+                                    action: 'merge',
+                                    newTile: {
+                                        tier: mergedTier > 12 ? 12 : mergedTier,
+                                        isRainbow,
+                                        merged: true
+                                    }
+                                });
+
+                                // Update grid immediately
+                                this.grid[next.row][next.col] = {
+                                    tier: mergedTier > 12 ? 12 : mergedTier,
+                                    isRainbow,
+                                    merged: true
+                                };
+                                this.grid[row][col] = null;
+
+                                // Update score
+                                const points = this.colorTiers[mergedTier - 1 > 11 ? 11 : mergedTier - 1].points;
+                                this.score += points;
+
+                                // Reduced currency for merges - creates scarcity
+                                const baseReward = Math.ceil(mergedTier / 4);
+                                // Diminishing returns at higher scores
+                                const scalingFactor = Math.max(0.3, 1 - (this.score / 5000));
+                                this.currency += Math.ceil(baseReward * scalingFactor);
+
+                                // Add the new tier to discovered tiers if not already there
+                                if (!this.discoveredTiers.includes(mergedTier) && mergedTier <= 12) {
+                                    this.discoveredTiers.push(mergedTier);
+
+                                    // Sort the discovered tiers
+                                    this.discoveredTiers.sort((a, b) => a - b);
+
+                                    // Check if blast should be unlocked (when tier 6 is discovered)
+                                    if (mergedTier >= 6 && !this.blastUnlocked) {
+                                        this.blastUnlocked = true;
+                                        this.initializeAbilities();
+                                    }
+                                }
+
+                                moved = true;
+                            } else if (newRow !== row || newCol !== col) {
+                                // Animate tile move
+                                tilesToAnimate.push({
+                                    fromRow: row,
+                                    fromCol: col,
+                                    toRow: newRow,
+                                    toCol: newCol,
+                                    action: 'move'
+                                });
+
+                                // Update grid immediately
+                                this.grid[newRow][newCol] = tile;
+                                this.grid[row][col] = null;
+                                moved = true;
+                            }
+                        }
+                    });
+                });
+
+                // If no movement occurred, restore the previous state
+                if (!moved) {
+                    this.previousStates.pop();
+                } else {
+                    // Animate all tile movements
+                    this.animateTiles(tilesToAnimate);
+
+                    // Update score display immediately
+                    this.updateScoreDisplay();
+                }
+
+                return moved;
+            }
+
+            buildTraversals(direction) {
+                const traversals = {
+                    row: [],
+                    col: []
+                };
+
+                for (let i = 0; i < this.gridSize; i++) {
+                    traversals.row.push(i);
+                    traversals.col.push(i);
+                }
+
+                // Always traverse from the edge in the direction of movement
+                if (direction === 'right') traversals.col = traversals.col.reverse();
+                if (direction === 'down') traversals.row = traversals.row.reverse();
+
+                return traversals;
+            }
+
+            findFarthestPosition(row, col, direction) {
+                let newRow = row;
+                let newCol = col;
+
+                // Define the vector for the direction
+                const vector = this.getVector(direction);
+
+                // Keep moving until we hit an obstacle or the edge
+                do {
+                    row = newRow;
+                    col = newCol;
+                    newRow += vector.row;
+                    newCol += vector.col;
+                } while (
+                    this.withinBounds(newRow, newCol) &&
+                    !this.grid[newRow][newCol]
+                );
+
+                return { newRow: row, newCol: col };
+            }
+
+            findNextTile(row, col, direction) {
+                const vector = this.getVector(direction);
+                let nextRow = row + vector.row;
+                let nextCol = col + vector.col;
+
+                if (this.withinBounds(nextRow, nextCol) && this.grid[nextRow][nextCol]) {
+                    return {
+                        row: nextRow,
+                        col: nextCol,
+                        tile: this.grid[nextRow][nextCol]
+                    };
+                }
+
+                return null;
+            }
+
+            getVector(direction) {
+                const vectors = {
+                    up: { row: -1, col: 0 },
+                    right: { row: 0, col: 1 },
+                    down: { row: 1, col: 0 },
+                    left: { row: 0, col: -1 }
+                };
+
+                return vectors[direction];
+            }
+
+            withinBounds(row, col) {
+                return row >= 0 && row < this.gridSize && col >= 0 && col < this.gridSize;
+            }
+
+            afterMove() {
+                // Add a small delay to ensure tile animations complete before adding new tile
+                setTimeout(() => {
+                    this.addRandomTile();
+                    this.updateAchievementPanel();
+
+                    // Check for game over
+                    if (this.isGameOver()) {
+                        this.gameOver = true;
+                        this.gameOverElement.classList.add('active');
+                        // Save final score and best score
+                        this.saveToLocalStorage();
+                    }
+                }, 180); // Small delay to ensure smooth animation sequence
+            }
+
+            animateTiles(tilesToAnimate) {
+                tilesToAnimate.forEach(({ fromRow, fromCol, toRow, toCol, action, newTile }) => {
+                    // 1) If this is a merge - remove the old destination tile
+                    if (action === 'merge') {
+                        const existingTile = this.gridElement.querySelector(`.tile[data-row="${toRow}"][data-col="${toCol}"]`);
+                        if (existingTile) {
+                            existingTile.remove();
+                        }
+                    }
+
+                    // 2) Find the source tile and animate it
+                    const tileElement = this.gridElement.querySelector(`.tile[data-row="${fromRow}"][data-col="${fromCol}"]`);
+
+                    if (!tileElement) return;
+
+                    // Calculate new position
+                    const cellDimensions = this.getCellDimensions();
+                    const { width: cellWidth, height: cellHeight, gridGap } = cellDimensions;
+                    const newLeft = toCol * (cellWidth + gridGap);
+                    const newTop = toRow * (cellHeight + gridGap);
+
+                    // Update tile data attributes
+                    tileElement.dataset.row = toRow;
+                    tileElement.dataset.col = toCol;
+
+                    // Use CSS transitions (already defined in CSS)
+                    tileElement.style.left = `${newLeft}px`;
+                    tileElement.style.top = `${newTop}px`;
+
+                    // 3) In case of merge - update appearance and play pop animation
+                    if (action === 'merge') {
+                        // After movement animation, update the tile appearance
+                        setTimeout(() => {
+                            this.updateTileAppearance(tileElement, newTile);
+                            tileElement.classList.add('merged');
+
+                            // Remove merged class after animation
+                            setTimeout(() => {
+                                tileElement.classList.remove('merged');
+                            }, 250);
+                        }, 150); // Wait for movement to complete
+                    }
+                });
+            }
+
+            updateTileAppearance(tileElement, tile) {
+                // Update tile appearance based on new tile data
+                if (tile.isBlocker) {
+                    tileElement.style.backgroundColor = '#2C2C2C';
+                    tileElement.style.border = '2px solid #FF4444';
+                    tileElement.innerHTML = '<div style="color: #FF4444; font-weight: bold; font-size: 1.5em;">✖</div>';
+                } else if (!tile.isRainbow) {
+                    const colorTier = this.colorTiers[tile.tier - 1];
+                    tileElement.style.backgroundColor = colorTier.hex;
+                    tileElement.innerHTML = '';
+
+                    // Update rainbow class
+                    if (tileElement.classList.contains('rainbow')) {
+                        tileElement.classList.remove('rainbow');
+                    }
+                } else {
+                    // Rainbow tile
+                    if (!tileElement.classList.contains('rainbow')) {
+                        tileElement.classList.add('rainbow');
+                    }
+                    tileElement.innerHTML = '';
+                }
+            }
+
+            updateScoreDisplay() {
+                this.scoreElement.textContent = this.score;
+                this.currencyElement.textContent = this.currency;
+
+                if (this.score > this.bestScore) {
+                    this.bestScore = this.score;
+                    this.bestScoreElement.textContent = this.bestScore;
+                    // Save new best score immediately
+                    this.saveToLocalStorage();
+                }
+
+                // Update abilities when score changes (for dynamic pricing)
+                this.updateAbilities();
+            }
+
+            saveToLocalStorage() {
+                const gameState = {
+                    gridSize: this.gridSize,
+                    grid: this.grid,
+                    // Don't save current score - it should reset for each new session
+                    bestScore: this.bestScore,
+                    currency: this.currency,
+                    discoveredTiers: this.discoveredTiers,
+                    maxUndos: this.maxUndos,
+                    usedUndos: this.usedUndos,
+                    rainbowChance: this.rainbowChance,
+                    rainbowChanceBoost: this.rainbowChanceBoost,
+                    blastUnlocked: this.blastUnlocked,
+                    blastCooldown: this.blastCooldown,
+                    shopPurchases: this.shopPurchases
+                };
+
+                localStorage.setItem('spectrumShift', JSON.stringify(gameState));
+            }
+
+            loadGameState() {
+                const savedState = localStorage.getItem('spectrumShift');
+
+                if (savedState) {
+                    const gameState = JSON.parse(savedState);
+
+                    this.gridSize = gameState.gridSize || 4;
+                    this.grid = gameState.grid || [];
+                    // Always start with score 0 for new session/game
+                    this.score = 0;
+                    this.bestScore = gameState.bestScore || 0;
+                    this.currency = gameState.currency || 0;
+                    this.discoveredTiers = gameState.discoveredTiers || [];
+                    this.maxUndos = gameState.maxUndos || 0; // DIFFICULTY: No undos by default
+                    this.usedUndos = gameState.usedUndos || 0;
+                    this.rainbowChance = gameState.rainbowChance || 0.05;
+                    this.rainbowChanceBoost = gameState.rainbowChanceBoost || 0;
+                    this.blastUnlocked = gameState.blastUnlocked || false;
+                    this.blastCooldown = gameState.blastCooldown || 0;
+                    this.shopPurchases = gameState.shopPurchases || {
+                        extraUndos: 0,
+                        rainbowChance: 0,
+                        gridUpgrade: false
+                    };
+
+                    // Always start fresh game, but keep progress
+                    this.grid = [];
+                    this.usedUndos = 0;
+                    this.blastCooldown = 0;
+
+                    // Reinitialize the game with fresh state
+                    this.initializeGame();
+
+                    // Update UI to reflect fresh start
+                    this.updateScoreDisplay();
+                    this.updateAchievementPanel();
+                } else {
+                    // No saved state - completely fresh start
+                    this.initializeGame();
+                }
+            }
+
+            refreshAllTiles() {
+                // Remove all existing tiles (for cases like undo where we need full refresh)
+                const tiles = document.querySelectorAll('.tile');
+                tiles.forEach(tile => tile.remove());
+
+                // Small delay to ensure grid is properly rendered before positioning tiles
+                setTimeout(() => {
+                    // Render all tiles in their new positions
+                    for (let row = 0; row < this.gridSize; row++) {
+                        for (let col = 0; col < this.gridSize; col++) {
+                            if (this.grid[row][col]) {
+                                const tile = this.grid[row][col];
+                                this.renderTile(row, col, tile, false);
+
+                                // Add merged animation if needed
+                                if (tile.merged) {
+                                    const tileElement = this.gridElement.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+                                    if (tileElement) {
+                                        tileElement.classList.add('merged');
+                                        delete tile.merged;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }, 10);
+            }
+
+            // Legacy method - kept for compatibility but not used with new real-time approach
+            updateUI() {
+                this.refreshAllTiles();
+                this.updateScoreDisplay();
+                this.updateAchievementPanel();
+                this.updateAbilities();
+
+                // Always check for game over when updating UI
+                if (!this.gameOver && this.isGameOver()) {
+                    this.gameOver = true;
+                    this.gameOverElement.classList.add('active');
+                }
+            }
+
+            // Legacy updateScore method removed - using updateScoreDisplay() instead
+
+            updateAchievementPanel() {
+                // Update the color tiers display
+                const tierElements = document.querySelectorAll('.color-tier');
+
+                tierElements.forEach(element => {
+                    const tier = parseInt(element.dataset.tier);
+
+                    if (this.discoveredTiers.includes(tier)) {
+                        const colorTier = this.colorTiers[tier - 1];
+                        element.style.backgroundColor = colorTier.hex;
+                        element.title = `${colorTier.name} (${colorTier.points} points)`;
+                        element.classList.remove('undiscovered');
+                    } else {
+                        element.classList.add('undiscovered');
+                        element.title = 'Undiscovered';
+                    }
+                });
+            }
+
+            updateTilePositions() {
+                // Update tile positions when the window is resized
+                const tiles = document.querySelectorAll('.tile');
+
+                tiles.forEach(tile => {
+                    const row = parseInt(tile.dataset.row);
+                    const col = parseInt(tile.dataset.col);
+
+                    // Get precise cell dimensions
+                    const cellDimensions = this.getCellDimensions();
+                    const { width: cellWidth, height: cellHeight, gridGap } = cellDimensions;
+
+                    // Calculate position correctly to match CSS grid
+                    const left = col * (cellWidth + gridGap);
+                    const top = row * (cellHeight + gridGap);
+
+                    tile.style.width = `${cellWidth}px`;
+                    tile.style.height = `${cellHeight}px`;
+                    tile.style.left = `${left}px`;
+                    tile.style.top = `${top}px`;
+                });
+            }
+
+            isGameOver() {
+                // Check if there are any empty cells
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        if (!this.grid[row][col]) {
+                            return false;
+                        }
+                    }
+                }
+
+                // Check if there are any possible merges
+                for (let row = 0; row < this.gridSize; row++) {
+                    for (let col = 0; col < this.gridSize; col++) {
+                        const tile = this.grid[row][col];
+
+                        // Check all 4 directions (like in classic 2048)
+                        const directions = [
+                            [-1, 0], // up
+                            [1, 0],  // down
+                            [0, -1], // left
+                            [0, 1]   // right
+                        ];
+
+                        for (const [dx, dy] of directions) {
+                            const newRow = row + dx;
+                            const newCol = col + dy;
+
+                            if (
+                                newRow >= 0 && newRow < this.gridSize &&
+                                newCol >= 0 && newCol < this.gridSize
+                            ) {
+                                const adjacentTile = this.grid[newRow][newCol];
+
+                                if (adjacentTile) {
+                                    // Can merge only if exact same tier (classic 2048 logic)
+                                    // No special rainbow logic for game over
+                                    // Blockers cannot be merged
+                                    if (!tile.isBlocker && !adjacentTile.isBlocker && tile.tier === adjacentTile.tier) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            // Helper method to get current grid gap
+            getGridGap() {
+                const width = window.innerWidth;
+                if (width <= 350) {
+                    return this.SMALL_MOBILE_GRID_GAP;
+                } else if (width <= 500) {
+                    return this.MOBILE_GRID_GAP;
+                } else {
+                    return this.GRID_GAP;
+                }
+            }
+
+            // Helper method to get precise cell dimensions
+            getCellDimensions() {
+                const gridGap = this.getGridGap();
+
+                // Get the actual grid element dimensions (not the container)
+                const gridRect = this.gridElement.getBoundingClientRect();
+                const gridWidth = gridRect.width;
+                const gridHeight = gridRect.height;
+
+                // Calculate cell dimensions accounting for gaps between cells
+                // The grid itself has gaps between cells, no padding
+                const totalGapWidth = gridGap * (this.gridSize - 1);
+                const totalGapHeight = gridGap * (this.gridSize - 1);
+
+                const cellWidth = (gridWidth - totalGapWidth) / this.gridSize;
+                const cellHeight = (gridHeight - totalGapHeight) / this.gridSize;
+
+                return {
+                    width: cellWidth,
+                    height: cellHeight,
+                    gridGap: gridGap
+                };
+            }
+        }
+
+        // FAQ toggle function
+        function toggleFAQ(element) {
+            const faqItem = element.parentElement;
+            const isActive = faqItem.classList.contains('active');
+
+            // Close all other FAQ items
+            document.querySelectorAll('.faq-item.active').forEach(item => {
+                if (item !== faqItem) {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Toggle current FAQ item
+            if (isActive) {
+                faqItem.classList.remove('active');
+            } else {
+                faqItem.classList.add('active');
+            }
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            const game = new Game();
+
+            // Throttle function for better performance
+            function throttle(func, limit) {
+                let inThrottle;
+                return function () {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                };
+            }
+
+            // Handle window resize with throttling
+            window.addEventListener('resize', throttle(() => {
+                game.updateTilePositions();
+            }, 100));
+        });
+    </script>
+</body>
+
+</html>
