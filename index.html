@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spectrum Shift</title>
+    <script src="localization.js"></script>
+    <script src="yandex-games-sdk.js"></script>
     <style>
         /* Enhanced glassmorphism design */
         :root {
@@ -641,6 +643,220 @@
         }
 
         .faq-modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Leaderboard Modal Styles */
+        .leaderboard-modal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(25px) saturate(120%);
+            -webkit-backdrop-filter: blur(25px) saturate(120%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: clamp(8px, 2vw, 20px);
+        }
+
+        .leaderboard-modal-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .leaderboard-modal {
+            background: var(--shop-bg);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: var(--tile-border-radius);
+            width: 100%;
+            max-width: min(90vw, 500px);
+            max-height: 90vh;
+            border: var(--glass-border-strong);
+            box-shadow: var(--glass-shadow-hover),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .leaderboard-modal-container.active .leaderboard-modal {
+            transform: scale(1);
+        }
+
+        .leaderboard-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            z-index: 1;
+        }
+
+        .leaderboard-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(16px, 4vw, 24px);
+            border-bottom: var(--glass-border);
+            flex-shrink: 0;
+        }
+
+        .leaderboard-modal-title {
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-light);
+        }
+
+        .leaderboard-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .leaderboard-modal-close:hover {
+            transform: rotate(90deg);
+        }
+
+        .leaderboard-modal-content {
+            padding: clamp(16px, 4vw, 24px);
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .your-rank-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            border-radius: clamp(8px, 2vw, 12px);
+            padding: clamp(12px, 3vw, 16px);
+            margin-bottom: clamp(16px, 4vw, 24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: center;
+        }
+
+        .your-rank-title {
+            color: var(--text-light);
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-weight: 600;
+            margin-bottom: clamp(6px, 1.5vw, 8px);
+        }
+
+        .your-rank-display {
+            color: #4ECDC4;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            font-weight: 700;
+        }
+
+        .leaderboard-list {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            border-radius: clamp(8px, 2vw, 12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .leaderboard-loading {
+            text-align: center;
+            color: var(--text-light);
+            padding: clamp(20px, 5vw, 30px);
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+        }
+
+        .leaderboard-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 100px;
+            gap: clamp(8px, 2vw, 12px);
+            padding: clamp(10px, 2.5vw, 14px);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .leaderboard-entry {
+            display: grid;
+            grid-template-columns: 60px 1fr 100px;
+            gap: clamp(8px, 2vw, 12px);
+            padding: clamp(10px, 2.5vw, 14px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            color: var(--text-light);
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+
+        .leaderboard-entry:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .leaderboard-entry.current-player {
+            background: rgba(76, 205, 196, 0.2);
+            border: 1px solid rgba(76, 205, 196, 0.4);
+        }
+
+        .leaderboard-entry.current-player:hover {
+            background: rgba(76, 205, 196, 0.3);
+        }
+
+        .leaderboard-rank {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .leaderboard-rank.top-3 {
+            color: #FFD93D;
+        }
+
+        .leaderboard-player {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .leaderboard-score {
+            text-align: right;
+            font-weight: 600;
+            color: #4ECDC4;
+        }
+
+        /* Custom scrollbar for leaderboard modal */
+        .leaderboard-modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .leaderboard-modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .leaderboard-modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+
+        .leaderboard-modal-content::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
 
@@ -1662,11 +1878,11 @@
         <div class="game-header">
             <div class="score-container">
                 <div class="score-box">
-                    <div class="score-label">SCORE</div>
+                    <div class="score-label" id="score-label">SCORE</div>
                     <div class="score-value" id="score">0</div>
                 </div>
                 <div class="score-box">
-                    <div class="score-label">BEST</div>
+                    <div class="score-label" id="best-label">BEST</div>
                     <div class="score-value" id="best-score">0</div>
                 </div>
             </div>
@@ -1683,7 +1899,7 @@
         <div class="grid-container">
             <div class="grid" id="grid"></div>
             <div class="game-over" id="game-over">
-                <div class="game-over-message">Game Over!</div>
+                <div class="game-over-message" id="game-over-message">Game Over!</div>
                 <button class="button try-again-button" id="try-again">Try Again</button>
             </div>
 
@@ -1694,7 +1910,7 @@
         </div>
 
         <div class="achievement-panel">
-            <div class="achievement-title">Discovered Colors</div>
+            <div class="achievement-title" id="achievement-title">Discovered Colors</div>
             <div class="color-tiers" id="color-tiers"></div>
         </div>
 
@@ -1706,7 +1922,7 @@
     <!-- Slide Menu -->
     <div class="slide-menu" id="slide-menu">
         <div class="menu-header">
-            <div class="menu-title">Menu</div>
+            <div class="menu-title" id="menu-title">Menu</div>
             <button class="menu-close" id="menu-close">×</button>
         </div>
 
@@ -1714,6 +1930,7 @@
             <div class="menu-buttons">
                 <button class="menu-button-item" id="new-game">🎮 New Game</button>
                 <button class="menu-button-item" id="faq-button">❓ FAQ</button>
+                <button class="menu-button-item" id="leaderboard-button">🏆 Leaderboard</button>
             </div>
         </div>
 
@@ -1723,7 +1940,7 @@
     <div class="shop-container" id="shop-container">
         <div class="shop">
             <div class="shop-header">
-                <div class="shop-title">Shop</div>
+                <div class="shop-title" id="shop-title">Shop</div>
                 <button class="shop-close" id="shop-close">×</button>
             </div>
             <div class="shop-items" id="shop-items">
@@ -1732,11 +1949,30 @@
         </div>
     </div>
 
+    <!-- Leaderboard Modal -->
+    <div class="leaderboard-modal-container" id="leaderboard-modal-container">
+        <div class="leaderboard-modal">
+            <div class="leaderboard-modal-header">
+                <div class="leaderboard-modal-title" id="leaderboard-modal-title">🏆 Top Players</div>
+                <button class="leaderboard-modal-close" id="leaderboard-modal-close">×</button>
+            </div>
+            <div class="leaderboard-modal-content">
+                <div class="your-rank-section" id="your-rank-section">
+                    <div class="your-rank-title" id="your-rank-title">Your rank</div>
+                    <div class="your-rank-display" id="your-rank-display">Loading...</div>
+                </div>
+                <div class="leaderboard-list" id="leaderboard-list">
+                    <div class="leaderboard-loading" id="leaderboard-loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- FAQ Modal -->
     <div class="faq-modal-container" id="faq-modal-container">
         <div class="faq-modal">
             <div class="faq-modal-header">
-                <div class="faq-modal-title">❓ Game Guide & FAQ</div>
+                <div class="faq-modal-title" id="faq-modal-title">❓ Game Guide & FAQ</div>
                 <button class="faq-modal-close" id="faq-modal-close">×</button>
             </div>
             <div class="faq-modal-content">
@@ -1893,7 +2129,8 @@
 
     <script>
         class Game {
-            constructor() {
+            constructor(soundManager = null) {
+                this.soundManager = soundManager;
                 // Color tiers data with improved contrast and visual appeal
                 this.colorTiers = [
                     { tier: 1, name: "Coral Red", hex: "#FF6B6B", points: 2 },
@@ -2003,6 +2240,9 @@
                 // Reset game state
                 this.gameOver = false;
                 this.gameOverElement.classList.remove('active');
+
+                // Signal game start to Yandex Games
+                window.yandexGamesSDK.gameStart();
             }
 
             initializeColorTiers() {
@@ -2044,7 +2284,7 @@
                 undoButton.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-size: 1.2em;">↶</span>
-                        <span>UNDO</span>
+                        <span>${window.localization.t('undo')}</span>
                     </div>
                 `;
 
@@ -2087,14 +2327,14 @@
                 undoItem.className = 'shop-item';
                 undoItem.innerHTML = `
                     <div class="shop-item-info">
-                        <div class="shop-item-title">Extra Undo</div>
-                        <div class="shop-item-description">Increase max undo count by 1 (Very valuable!)</div>
+                        <div class="shop-item-title">${window.localization.t('extraUndo')}</div>
+                        <div class="shop-item-description">${window.localization.t('extraUndoDesc')}</div>
                     </div>
                     <div class="shop-item-price">
                         <div class="currency-icon">💎</div>
                         <div>${25 + this.shopPurchases.extraUndos * 15}</div>
                     </div>
-                    <button class="shop-item-button" id="buy-undo">Buy</button>
+                    <button class="shop-item-button" id="buy-undo">${window.localization.t('buy')}</button>
                 `;
                 this.shopItems.appendChild(undoItem);
 
@@ -2103,14 +2343,14 @@
                 rainbowItem.className = 'shop-item';
                 rainbowItem.innerHTML = `
                     <div class="shop-item-info">
-                        <div class="shop-item-title">Rainbow Boost</div>
-                        <div class="shop-item-description">Increase rainbow tile chance by 3% (Luxury upgrade)</div>
+                        <div class="shop-item-title">${window.localization.t('rainbowBoost')}</div>
+                        <div class="shop-item-description">${window.localization.t('rainbowBoostDesc')}</div>
                     </div>
                     <div class="shop-item-price">
                         <div class="currency-icon">💎</div>
                         <div>${40 + this.shopPurchases.rainbowChance * 25}</div>
                     </div>
-                    <button class="shop-item-button" id="buy-rainbow">Buy</button>
+                    <button class="shop-item-button" id="buy-rainbow">${window.localization.t('buy')}</button>
                 `;
                 this.shopItems.appendChild(rainbowItem);
 
@@ -2120,17 +2360,32 @@
                     gridItem.className = 'shop-item';
                     gridItem.innerHTML = `
                         <div class="shop-item-info">
-                            <div class="shop-item-title">Grid Upgrade</div>
-                            <div class="shop-item-description">Upgrade grid from 4x4 to 5x5 (Game changer!)</div>
+                            <div class="shop-item-title">${window.localization.t('gridUpgrade')}</div>
+                            <div class="shop-item-description">${window.localization.t('gridUpgradeDesc')}</div>
                         </div>
                         <div class="shop-item-price">
                             <div class="currency-icon">💎</div>
                             <div>100</div>
                         </div>
-                        <button class="shop-item-button" id="buy-grid">Buy</button>
+                        <button class="shop-item-button" id="buy-grid">${window.localization.t('buy')}</button>
                     `;
                     this.shopItems.appendChild(gridItem);
                 }
+
+                // Watch Ad for Gems - Always available
+                const adItem = document.createElement('div');
+                adItem.className = 'shop-item';
+                adItem.innerHTML = `
+                    <div class="shop-item-info">
+                        <div class="shop-item-title">${window.localization.t('watchAdTitle')}</div>
+                        <div class="shop-item-description">${window.localization.t('watchAdDesc')}</div>
+                    </div>
+                    <div class="shop-item-price">
+                        <div style="color: #4ECDC4; font-weight: bold;">FREE</div>
+                    </div>
+                    <button class="shop-item-button" id="watch-ad-shop">📺 ${window.localization.t('watchAdButton')}</button>
+                `;
+                this.shopItems.appendChild(adItem);
 
                 // Add event listeners
                 document.getElementById('buy-undo').addEventListener('click', () => this.buyExtraUndo());
@@ -2141,8 +2396,117 @@
                     buyGridButton.addEventListener('click', () => this.buyGridUpgrade());
                 }
 
+                // Watch ad button in shop
+                document.getElementById('watch-ad-shop').addEventListener('click', async () => {
+                    const rewarded = await window.yandexGamesSDK.showRewardedAd();
+                    if (rewarded) {
+                        // Give reward
+                        this.currency += 50;
+                        this.updateScoreDisplay();
+                        this.saveYandexData();
+
+                        console.log('Rewarded ad completed, +50 gems');
+
+                        // Close shop after successful ad
+                        this.toggleShop();
+                    }
+                });
+
                 // Update button states
                 this.updateShopButtons();
+            }
+
+            updateLocalization() {
+                // Update static UI elements
+                const scoreLabel = document.getElementById('score-label');
+                const bestLabel = document.getElementById('best-label');
+                const gameOverMessage = document.getElementById('game-over-message');
+                const tryAgainButton = document.getElementById('try-again');
+                const newGameButton = document.getElementById('new-game');
+                const menuTitle = document.getElementById('menu-title');
+                const shopTitle = document.getElementById('shop-title');
+                const achievementTitle = document.getElementById('achievement-title');
+                const faqModalTitle = document.getElementById('faq-modal-title');
+                const watchAdButton = document.getElementById('watch-ad-button');
+
+                if (scoreLabel) scoreLabel.textContent = window.localization.t('score');
+                if (bestLabel) bestLabel.textContent = window.localization.t('best');
+                if (gameOverMessage) gameOverMessage.textContent = window.localization.t('gameOver');
+                if (tryAgainButton) tryAgainButton.textContent = window.localization.t('tryAgain');
+                if (newGameButton) newGameButton.textContent = window.localization.t('newGame');
+                if (menuTitle) menuTitle.textContent = window.localization.t('menu');
+                if (shopTitle) shopTitle.textContent = window.localization.t('shop');
+                if (achievementTitle) achievementTitle.textContent = window.localization.t('discoveredColors');
+                if (faqModalTitle) faqModalTitle.textContent = window.localization.t('gameGuideTitle');
+                if (watchAdButton) watchAdButton.textContent = window.localization.t('watchAd');
+
+                // Re-initialize shop and abilities to update their text
+                this.initializeShop();
+                this.initializeAbilities();
+            }
+
+            pauseGame() {
+                // Pause game logic (e.g., stop timers, disable input)
+                this.gamePaused = true;
+                console.log('Game paused');
+            }
+
+            resumeGame() {
+                // Resume game logic
+                this.gamePaused = false;
+                console.log('Game resumed');
+            }
+
+            // Load game data from Yandex Games
+            async loadYandexData() {
+                const data = await window.yandexGamesSDK.loadData();
+                if (data) {
+                    try {
+                        // Load game state from Yandex
+                        if (data.score) this.score = data.score;
+                        if (data.bestScore) this.bestScore = data.bestScore;
+                        if (data.currency) this.currency = data.currency;
+                        if (data.grid) this.grid = data.grid;
+                        if (data.colorTiers) this.colorTiers = data.colorTiers;
+                        if (data.shopPurchases) this.shopPurchases = data.shopPurchases;
+                        if (data.maxUndos) this.maxUndos = data.maxUndos;
+                        if (data.rainbowChance) this.rainbowChance = data.rainbowChance;
+                        if (data.gridSize) this.gridSize = data.gridSize;
+                        if (data.blastUnlocked) this.blastUnlocked = data.blastUnlocked;
+
+                        console.log('Game data loaded from Yandex Games');
+                        this.updateScoreDisplay();
+                        this.updateAchievementPanel();
+                        this.renderGrid();
+                    } catch (error) {
+                        console.error('Error loading Yandex data:', error);
+                    }
+                }
+            }
+
+            // Save game data to Yandex Games
+            async saveYandexData() {
+                const gameData = {
+                    score: this.score,
+                    bestScore: this.bestScore,
+                    currency: this.currency,
+                    grid: this.grid,
+                    colorTiers: this.colorTiers,
+                    shopPurchases: this.shopPurchases,
+                    maxUndos: this.maxUndos,
+                    rainbowChance: this.rainbowChance,
+                    gridSize: this.gridSize,
+                    blastUnlocked: this.blastUnlocked,
+                    lastSaved: Date.now()
+                };
+
+                const success = await window.yandexGamesSDK.saveData(gameData);
+                if (success) {
+                    console.log('Game data saved to Yandex Games');
+                } else {
+                    console.log('Failed to save to Yandex Games, using localStorage');
+                    this.saveGameState(); // Fallback to localStorage
+                }
             }
 
             initializeAbilities() {
@@ -2170,7 +2534,7 @@
                     blastButton.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span style="font-size: 1.2em;">💥</span>
-                            <span>BLAST</span>
+                            <span>${window.localization.t('blast')}</span>
                         </div>
                     `;
                     blastButton.disabled = this.blastCooldown > 0;
@@ -2188,12 +2552,12 @@
                     const scalingCost = Math.floor(this.score / 500);
                     const currentCost = baseCost + scalingCost;
                     description.innerHTML = `
-                        <div>Destroy groups of same-colored tiles</div>
+                        <div>${window.localization.t('blastDesc')}</div>
                         <div style="margin-top: 4px; color: #4ECDC4; font-weight: bold;">
-                            💎 ${currentCost} per use
+                            💎 ${currentCost} ${window.localization.t('perUse')}
                         </div>
                         <div style="font-size: 0.9em; margin-top: 2px; color: #FF8E53;">
-                            Cost increases with score
+                            ${window.localization.t('costIncreases')}
                         </div>
                     `;
 
@@ -2306,6 +2670,18 @@
                         this.toggleFAQModal();
                     }
                 });
+
+                // Leaderboard Modal controls
+                document.getElementById('leaderboard-button').addEventListener('click', () => {
+                    this.toggleSlideMenu(); // Close menu first
+                    this.toggleLeaderboardModal(); // Then open leaderboard modal
+                });
+                document.getElementById('leaderboard-modal-close').addEventListener('click', () => this.toggleLeaderboardModal());
+                document.getElementById('leaderboard-modal-container').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('leaderboard-modal-container')) {
+                        this.toggleLeaderboardModal();
+                    }
+                });
             }
 
             saveGameState() {
@@ -2409,6 +2785,106 @@
             toggleFAQModal() {
                 const faqModal = document.getElementById('faq-modal-container');
                 faqModal.classList.toggle('active');
+            }
+
+            async toggleLeaderboardModal() {
+                const leaderboardModal = document.getElementById('leaderboard-modal-container');
+                leaderboardModal.classList.toggle('active');
+
+                if (leaderboardModal.classList.contains('active')) {
+                    await this.loadLeaderboard();
+                }
+            }
+
+            async loadLeaderboard() {
+                const yourRankDisplay = document.getElementById('your-rank-display');
+                const leaderboardList = document.getElementById('leaderboard-list');
+
+                // Show loading state
+                yourRankDisplay.textContent = window.localization.t('loading');
+                leaderboardList.innerHTML = `<div class="leaderboard-loading">${window.localization.t('loading')}</div>`;
+
+                try {
+                    // Get leaderboard entries
+                    const leaderboardEntries = await window.yandexGamesSDK.getLeaderboardEntries('best_score', {
+                        includeUser: true,
+                        quantityAround: 5,
+                        quantityTop: 10
+                    });
+
+                    if (leaderboardEntries && leaderboardEntries.entries) {
+                        this.displayLeaderboard(leaderboardEntries);
+                    } else {
+                        // No data available
+                        yourRankDisplay.textContent = window.localization.t('noData');
+                        leaderboardList.innerHTML = `<div class="leaderboard-loading">${window.localization.t('noData')}</div>`;
+                    }
+                } catch (error) {
+                    console.error('Failed to load leaderboard:', error);
+                    yourRankDisplay.textContent = window.localization.t('noData');
+                    leaderboardList.innerHTML = `<div class="leaderboard-loading">${window.localization.t('noData')}</div>`;
+                }
+            }
+
+            displayLeaderboard(leaderboardData) {
+                const yourRankDisplay = document.getElementById('your-rank-display');
+                const leaderboardList = document.getElementById('leaderboard-list');
+
+                // Get current player info
+                const playerInfo = window.yandexGamesSDK.getPlayerInfo();
+                const currentPlayerID = playerInfo ? playerInfo.uniqueID : null;
+
+                // Find player's rank
+                let playerRank = null;
+                if (leaderboardData.userRank) {
+                    playerRank = leaderboardData.userRank;
+                } else {
+                    // Find player in entries
+                    const playerEntry = leaderboardData.entries.find(entry =>
+                        entry.player && entry.player.uniqueID === currentPlayerID
+                    );
+                    if (playerEntry) {
+                        playerRank = playerEntry.rank;
+                    }
+                }
+
+                // Display player's rank
+                if (playerRank) {
+                    yourRankDisplay.textContent = `#${playerRank} (${this.bestScore} ${window.localization.t('score').toLowerCase()})`;
+                } else {
+                    yourRankDisplay.textContent = window.localization.t('noData');
+                }
+
+                // Create leaderboard list
+                let leaderboardHTML = `
+                    <div class="leaderboard-header">
+                        <div>${window.localization.t('place')}</div>
+                        <div>${window.localization.t('player')}</div>
+                        <div>${window.localization.t('score')}</div>
+                    </div>
+                `;
+
+                leaderboardData.entries.forEach(entry => {
+                    const isCurrentPlayer = entry.player && entry.player.uniqueID === currentPlayerID;
+                    const playerName = entry.player ?
+                        (entry.player.publicName || entry.player.scopePermissions?.public_name || 'Anonymous') :
+                        'Anonymous';
+
+                    const rankClass = entry.rank <= 3 ? 'top-3' : '';
+                    const entryClass = isCurrentPlayer ? 'current-player' : '';
+
+                    leaderboardHTML += `
+                        <div class="leaderboard-entry ${entryClass}">
+                            <div class="leaderboard-rank ${rankClass}">#${entry.rank}</div>
+                            <div class="leaderboard-player">
+                                ${isCurrentPlayer ? `${playerName} (${window.localization.t('you')})` : playerName}
+                            </div>
+                            <div class="leaderboard-score">${entry.score}</div>
+                        </div>
+                    `;
+                });
+
+                leaderboardList.innerHTML = leaderboardHTML;
             }
 
             updateShopButtons() {
@@ -2777,6 +3253,11 @@
                     blastEffect.style.top = `${rect.top - gridRect.top - rect.height / 2}px`;
                     this.gridElement.appendChild(blastEffect);
 
+                    // Play blast explosion sound
+                    if (this.soundManager) {
+                        this.soundManager.playSound('blast-explosion');
+                    }
+
                     // Remove the blast effect after animation
                     setTimeout(() => {
                         blastEffect.remove();
@@ -3113,6 +3594,11 @@
                                     }
                                 }
 
+                                // Play merge sound
+                                if (this.soundManager) {
+                                    this.soundManager.playSound('tile-merge');
+                                }
+
                                 moved = true;
                             } else if (newRow !== row || newCol !== col) {
                                 // Animate tile move
@@ -3227,8 +3713,23 @@
                     if (this.isGameOver()) {
                         this.gameOver = true;
                         this.gameOverElement.classList.add('active');
+
+                        // Play game over sound
+                        if (this.soundManager) {
+                            this.soundManager.playSound('game-over');
+                        }
+
+                        // Show interstitial ad on game over (Yandex Games)
+                        window.yandexGamesSDK.showFullscreenAd();
+
+                        // Signal game stop to Yandex Games
+                        window.yandexGamesSDK.gameStop();
+
                         // Save final score and best score
                         this.saveToLocalStorage();
+
+                        // Also save to Yandex Games
+                        this.saveYandexData();
                     }
                 }, 180); // Small delay to ensure smooth animation sequence
             }
@@ -3309,8 +3810,14 @@
                 if (this.score > this.bestScore) {
                     this.bestScore = this.score;
                     this.bestScoreElement.textContent = this.bestScore;
+
+                    // Submit score to Yandex Games leaderboard
+                    window.yandexGamesSDK.setLeaderboardScore('best_score', this.bestScore);
                     // Save new best score immediately
                     this.saveToLocalStorage();
+
+                    // Also save to Yandex Games
+                    this.saveYandexData();
                 }
 
                 // Update abilities when score changes (for dynamic pricing)
@@ -3571,9 +4078,111 @@
             }
         }
 
+        // Sound system
+        class SoundManager {
+            constructor() {
+                this.sounds = {};
+                this.loadSound('ui-button-click', 'assets/sounds/mixkit-video-game-retro-click-237.wav');
+                this.loadSound('ui-pop-sound', 'assets/sounds/mixkit-typewriter-soft-click-1125.wav');
+                this.loadSound('tile-merge', 'assets/sounds/mixkit-long-pop-2358.wav');
+                this.loadSound('blast-explosion', 'assets/sounds/811927__claywh__explosion.mp3');
+                this.loadSound('game-over', 'assets/sounds/mixkit-wrong-answer-fail-notification-946.wav');
+            }
+
+            loadSound(name, path) {
+                try {
+                    const audio = new Audio(path);
+                    audio.preload = 'auto';
+                    audio.volume = 0.5; // Set volume to 50%
+                    this.sounds[name] = audio;
+                } catch (error) {
+                    console.warn('Could not load sound:', path, error);
+                }
+            }
+
+            playSound(name) {
+                if (this.sounds[name]) {
+                    try {
+                        // Reset audio to beginning in case it's still playing
+                        this.sounds[name].currentTime = 0;
+                        this.sounds[name].play().catch(e => {
+                            // Handle autoplay policy restrictions
+                            console.warn('Could not play sound:', e);
+                        });
+                    } catch (error) {
+                        console.warn('Error playing sound:', error);
+                    }
+                }
+            }
+        }
+
         // Start the game when the page loads
         window.addEventListener('DOMContentLoaded', () => {
-            const game = new Game();
+            const soundManager = new SoundManager();
+            const game = new Game(soundManager);
+
+            // Store game instance globally for localization
+            window.game = game;
+
+            // Initialize localization
+            window.localization.updateUI();
+
+            // Initialize Yandex Games SDK
+            window.yandexGamesSDK.init().then((success) => {
+                if (success) {
+                    console.log('Yandex Games SDK ready');
+
+                    // Signal that game is ready
+                    window.yandexGamesSDK.gameReady();
+
+                    // Load game data from Yandex
+                    game.loadYandexData();
+                } else {
+                    console.log('Yandex Games SDK not available, using local storage');
+                }
+            });
+
+            // Language is auto-detected, no manual toggle needed
+            // Watch ad functionality moved to shop
+
+            // Add click sound to all menu buttons
+            function addClickSoundToButtons() {
+                // Add sound to existing menu buttons
+                document.querySelectorAll('.menu-button, .menu-button-item').forEach(button => {
+                    button.addEventListener('click', () => {
+                        soundManager.playSound('ui-button-click');
+                    });
+                });
+
+                // Add sound to shop and ability buttons (excluding UNDO button)
+                document.querySelectorAll('.shop-item-button, .ability:not(#undo-ability), .button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        soundManager.playSound('ui-button-click');
+                    });
+                });
+
+                // Special handling for UNDO button - use pop sound
+                const undoButton = document.getElementById('undo-ability');
+                if (undoButton && !undoButton._soundHandlerAdded) {
+                    undoButton.addEventListener('click', () => {
+                        soundManager.playSound('ui-pop-sound');
+                    });
+                    undoButton._soundHandlerAdded = true;
+                }
+            }
+
+            // Initial setup
+            addClickSoundToButtons();
+
+            // Re-add sounds when new buttons are created (e.g., after shop initialization)
+            const observer = new MutationObserver(() => {
+                addClickSoundToButtons();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
 
             // Throttle function for better performance
             function throttle(func, limit) {
